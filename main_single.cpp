@@ -58,9 +58,9 @@ const LL FARLIVETWOMARK = 1000;
 const LL SLEEPTWOMARK = 500;
 const LL ONEMARK = 1;
 
-int SEARCHCNT[] = {0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6};
+int SEARCHCNT[] = {0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 225};
 const LL MARKS[][2] = {
-    {3, 1}, {1000, 100}, {100000, 20000}, {10000000, 200000}};
+    {10, 1}, {1000, 100}, {100000, 20000}, {10000000, 200000}};
 
 const int BASE_MARK[15][15] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
                                {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
@@ -327,14 +327,17 @@ struct Agent {
 };
 
 LL Agent::MinMaxSearch(int depth, LL alpha, LL beta, int curColor) {
+#ifdef ONLINE_JUDGE
+    // 临近超时
+    if (1.0 * (clock() - st) / CLOCKS_PER_SEC >= 0.98) {
+        PrintJson();
+        exit(0);
+    }
+#endif
     // 搜索完成估值返回
     if (depth <= 0) return Evaluate(curColor);
     // 无子可走
     if (!nextPos[MAX].size()) return alpha;
-#ifdef ONLINE_JUDGE
-    // 临近超时
-    if (1.0 * (clock() - st) / CLOCKS_PER_SEC >= 0.98) return alpha;
-#endif
     auto pos = nextPos[MAX].begin();
     for (int i = 0; i < SEARCHCNT[depth] && pos != nextPos[MAX].end();
          i++, pos++) {
@@ -545,7 +548,7 @@ void Agent::Update(int x, int y, int color) {
 }
 
 LL Agent::Evaluate(int color) {
-    return sumWeight[color] - sumWeight[color ^ 1] * 0.8;
+    return sumWeight[color] - sumWeight[color ^ 1] * 0.5;
 }
 
 #endif
