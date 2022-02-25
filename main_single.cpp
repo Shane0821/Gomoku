@@ -27,7 +27,7 @@ const pair<int, int> POS_UNDEFINED = {-1, -1};
 const int BRANCH_LIMIT = 20;
 
 // 搜索深度默认为 6, 优化后再升级
-const int SEARCH_DEPTH = 8;
+const int SEARCH_DEPTH = 10;
 
 // 各局面价值表，待完善
 const int valueTable = {0};
@@ -58,7 +58,7 @@ const LL FARLIVETWOMARK = 1000;
 const LL SLEEPTWOMARK = 500;
 const LL ONEMARK = 1;
 
-int SEARCHCNT[] = {0, 7, 7, 7, 7, 7, 7, 7, 9};
+int SEARCHCNT[] = {0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6};
 const LL MARKS[][2] = {
     {3, 1}, {1000, 100}, {100000, 20000}, {10000000, 200000}};
 
