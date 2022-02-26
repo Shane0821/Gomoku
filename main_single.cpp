@@ -58,7 +58,7 @@ const LL FARLIVETWOMARK = 1000;
 const LL SLEEPTWOMARK = 500;
 const LL ONEMARK = 1;
 
-int SEARCHCNT[] = {0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 225};
+int SEARCHCNT[] = {0, 5, 5, 5, 5, 5, 5, 5, 5, 6, 225};
 const LL MARKS[][2] = {
     {10, 1}, {1000, 100}, {100000, 20000}, {10000000, 200000}};
 
@@ -542,6 +542,7 @@ void Agent::Update(int x, int y, int color) {
                     i, j, max(weight[WHITE][i][j], weight[BLACK][i][j])});
                 // nextPos[WHITE].insert(Position{i, j, weight[WHITE][i][j]});
                 // nextPos[BLACK].insert(Position{i, j, weight[BLACK][i][j]});
+                break;
             }
         }
     }

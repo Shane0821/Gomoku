@@ -52,14 +52,17 @@ struct Agent {
 };
 
 LL Agent::MinMaxSearch(int depth, LL alpha, LL beta, int curColor) {
+#ifdef ONLINE_JUDGE
+    // 临近超时
+    if (1.0 * (clock() - st) / CLOCKS_PER_SEC >= 0.98) {
+        PrintJson();
+        exit(0);
+    }
+#endif
     // 搜索完成估值返回
     if (depth <= 0) return Evaluate(curColor);
     // 无子可走
     if (!nextPos[MAX].size()) return alpha;
-#ifdef ONLINE_JUDGE
-    // 临近超时
-    if (1.0 * (clock() - st) / CLOCKS_PER_SEC >= 0.98) return alpha;
-#endif
     auto pos = nextPos[MAX].begin();
     for (int i = 0; i < SEARCHCNT[depth] && pos != nextPos[MAX].end();
          i++, pos++) {
@@ -77,7 +80,7 @@ LL Agent::MinMaxSearch(int depth, LL alpha, LL beta, int curColor) {
         // 取消落子 更新得分
         Update(x, y, UNPLACE);
         pos = nextPos[MAX].find(Position{x, y, w});
-        assert(pos != nextPos[MAX].end());
+        // assert(pos != nextPos[MAX].end());
         // 恢复上一次落子位置
         if (depth == SEARCH_DEPTH &&
             (val > bestScore || bestDropPos == POS_UNDEFINED))
@@ -264,6 +267,7 @@ void Agent::Update(int x, int y, int color) {
                     i, j, max(weight[WHITE][i][j], weight[BLACK][i][j])});
                 // nextPos[WHITE].insert(Position{i, j, weight[WHITE][i][j]});
                 // nextPos[BLACK].insert(Position{i, j, weight[BLACK][i][j]});
+                break;
             }
         }
     }
