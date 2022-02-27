@@ -356,7 +356,7 @@ LL Agent::MinMaxSearch(int depth, LL alpha, LL beta, int curColor) {
         // 继续搜索
         LL val;
         if (weight[curColor][x][y] >= MARKS[4][0]) {
-            val = INF - (SEARCH_DEPTH - depth);
+            val = INF - (iterDepth - depth);
         } else {
             // 落子
             Update(x, y, curColor);
