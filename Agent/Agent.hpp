@@ -72,20 +72,23 @@ LL Agent::MinMaxSearch(int depth, LL alpha, LL beta, int curColor) {
          i++, pos++) {
         auto x = pos->x, y = pos->y;
         auto w = pos->w;
-        Update(x, y, curColor);
-        // 更改上一次落子位置
+
         // 继续搜索
         LL val;
-        if (myBoard.CheckFive(x, y, curColor)) {
+        if (weight[curColor][x][y] >= MARKS[4][0]) {
             val = INF - (SEARCH_DEPTH - depth);
         } else {
+            // 落子
+            Update(x, y, curColor);
             val = -MinMaxSearch(depth - 1, -beta, -alpha, !curColor);
+            // 取消落子 更新得分
+            Update(x, y, UNPLACE);
+            pos = nextPos[MAX].find(Position{x, y, w});
+#ifndef ONLINE_JUDGE
+            assert(pos != nextPos[MAX].end());
+#endif
         }
-        // 取消落子 更新得分
-        Update(x, y, UNPLACE);
-        pos = nextPos[MAX].find(Position{x, y, w});
-        // assert(pos != nextPos[MAX].end());
-        // 恢复上一次落子位置
+
         if (val == TIME_OUT) return -TIME_OUT;
 
         if (depth == iterDepth &&
@@ -149,7 +152,7 @@ void Agent::Run() {
 #ifndef ITERATIVE_DEEPENING
     MinMaxSearch(SEARCH_DEPTH, -INF, INF, color);
 #else
-    for (int i = 2; i <= SEARCH_DEPTH; i += 2) {
+    for (int i = 6; i <= SEARCH_DEPTH; i += 2) {
         iterDepth = i;
         MinMaxSearch(i, -INF, INF, color);
     }

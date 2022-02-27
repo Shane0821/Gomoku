@@ -1,5 +1,5 @@
 #define ONLINE_JUDGE
-// #define ITERATIVE_DEEPENING
+#define ITERATIVE_DEEPENING
 #define RELEASE
 #ifdef RELEASE
 #pragma GCC optimize(3, \
@@ -60,9 +60,12 @@ const LL FARLIVETWOMARK = 1000;
 const LL SLEEPTWOMARK = 500;
 const LL ONEMARK = 1;
 
-int SEARCHCNT[] = {0, 5, 5, 5, 5, 5, 5, 5, 5, 6, 225};
-const LL MARKS[][2] = {
-    {10, 1}, {1000, 100}, {100000, 20000}, {10000000, 200000}};
+int SEARCHCNT[] = {0, 6, 6, 6, 6, 6, 6, 7, 7, 8, 225};
+const LL MARKS[][2] = {{10, 1},
+                       {1000, 100},
+                       {100000, 20000},
+                       {10000000, 200000},
+                       {1000000000, 1000000000}};
 
 const int BASE_MARK[15][15] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
                                {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
@@ -210,7 +213,7 @@ LL Board::MarkOfPoint(int curX, int curY, int playerColor) {
             rightUnplace =
                 RelativePosState(curX, curY, i, right + 1) == UNPLACE;
         if (left + right >= 4) {
-            return MARKS[3][0] * 100;
+            return MARKS[4][0];
         }
         if (leftUnplace || rightUnplace) {
             total += MARKS[left + right][leftUnplace ^ rightUnplace];
@@ -349,20 +352,23 @@ LL Agent::MinMaxSearch(int depth, LL alpha, LL beta, int curColor) {
          i++, pos++) {
         auto x = pos->x, y = pos->y;
         auto w = pos->w;
-        Update(x, y, curColor);
-        // 更改上一次落子位置
+
         // 继续搜索
         LL val;
-        if (myBoard.CheckFive(x, y, curColor)) {
+        if (weight[curColor][x][y] >= MARKS[4][0]) {
             val = INF - (SEARCH_DEPTH - depth);
         } else {
+            // 落子
+            Update(x, y, curColor);
             val = -MinMaxSearch(depth - 1, -beta, -alpha, !curColor);
+            // 取消落子 更新得分
+            Update(x, y, UNPLACE);
+            pos = nextPos[MAX].find(Position{x, y, w});
+#ifndef ONLINE_JUDGE
+            assert(pos != nextPos[MAX].end());
+#endif
         }
-        // 取消落子 更新得分
-        Update(x, y, UNPLACE);
-        pos = nextPos[MAX].find(Position{x, y, w});
-        // assert(pos != nextPos[MAX].end());
-        // 恢复上一次落子位置
+
         if (val == TIME_OUT) return -TIME_OUT;
 
         if (depth == iterDepth &&
@@ -426,7 +432,7 @@ void Agent::Run() {
 #ifndef ITERATIVE_DEEPENING
     MinMaxSearch(SEARCH_DEPTH, -INF, INF, color);
 #else
-    for (int i = 2; i <= SEARCH_DEPTH; i += 2) {
+    for (int i = 6; i <= SEARCH_DEPTH; i += 2) {
         iterDepth = i;
         MinMaxSearch(i, -INF, INF, color);
     }
