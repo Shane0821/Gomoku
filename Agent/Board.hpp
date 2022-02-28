@@ -128,18 +128,36 @@ LL Board::MarkOfPoint(int curX, int curY, int playerColor) {
             left++;
         while (RelativePosState(curX, curY, i, right + 1) == playerColor)
             right++;
-        int leftUnplace = RelativePosState(curX, curY, i, -left - 1) == UNPLACE,
-            rightUnplace =
-                RelativePosState(curX, curY, i, right + 1) == UNPLACE;
         if (left + right >= 4) {
             return MARKS[4][0];
         }
+
+        int leftUnplace = RelativePosState(curX, curY, i, -left - 1) == UNPLACE,
+            rightUnplace =
+                RelativePosState(curX, curY, i, right + 1) == UNPLACE;
+        int leftLeftEq =
+                RelativePosState(curX, curY, i, -left - 2) == playerColor,
+            rightRightEq =
+                RelativePosState(curX, curY, i, right + 2) == playerColor;
+
         if (leftUnplace || rightUnplace) {
-            total += MARKS[left + right][leftUnplace ^ rightUnplace];
+            if (left + right == 3)
+                total += MARKS[left + right][leftUnplace ^ rightUnplace];
+            else {
+                bool tagLeft = (leftUnplace & leftLeftEq),
+                     tagRight = (rightUnplace & rightRightEq);
+                if (tagLeft && tagRight)
+                    total +=
+                        MARKS[left + right][leftUnplace ^ rightUnplace] * 50;
+                else if (tagLeft || tagRight)
+                    total +=
+                        MARKS[left + right][leftUnplace ^ rightUnplace] * 2;
+                else
+                    total += MARKS[left + right][leftUnplace ^ rightUnplace];
+            }
         }
     }
     return total + BASE_MARK[curX][curY];
 }
-
 
 #endif
