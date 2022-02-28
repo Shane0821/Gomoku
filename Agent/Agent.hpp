@@ -262,8 +262,11 @@ void Agent::Update(int x, int y, int color) {
     }
     // 修改完成后, 在8*4范围内修改空闲点的权值
     for (int dir = 0; dir < 8; dir++) {
+        int preState = INVALID;
         for (int off = 1; off < 5; off++) {
-            if (myBoard.RelativePosState(x, y, dir, off) == UNPLACE) {
+            int state = myBoard.RelativePosState(x, y, dir, off);
+            if (state == INVALID) break;
+            if (state == UNPLACE) {
                 int i = x + dr[dir] * off, j = y + dc[dir] * off;
 // 删除现存权值记录
 #ifndef ONLINE_JUDGE
@@ -292,8 +295,11 @@ void Agent::Update(int x, int y, int color) {
                     i, j, max(weight[WHITE][i][j], weight[BLACK][i][j])});
                 // nextPos[WHITE].insert(Position{i, j, weight[WHITE][i][j]});
                 // nextPos[BLACK].insert(Position{i, j, weight[BLACK][i][j]});
+                // break;
+                if (off > 1 && preState == UNPLACE) break;
+                preState = state;
+            } else if (preState == !state)
                 break;
-            }
         }
     }
 }

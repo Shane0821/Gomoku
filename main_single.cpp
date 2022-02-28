@@ -60,7 +60,7 @@ const LL FARLIVETWOMARK = 1000;
 const LL SLEEPTWOMARK = 500;
 const LL ONEMARK = 1;
 
-int SEARCHCNT[] = {0, 6, 6, 5, 5, 5, 5, 5, 5, 6, 225};
+int SEARCHCNT[] = {0, 7, 7, 6, 6, 5, 5, 5, 5, 5, 225};
 const LL MARKS[][2] = {{10, 1},
                        {1000, 100},
                        {100000, 20000},
@@ -229,10 +229,10 @@ LL Board::MarkOfPoint(int curX, int curY, int playerColor) {
                      tagRight = (rightUnplace & rightRightEq);
                 if (tagLeft && tagRight)
                     total +=
-                        MARKS[left + right][leftUnplace ^ rightUnplace] * 50;
+                        MARKS[left + right][leftUnplace ^ rightUnplace] * 100;
                 else if (tagLeft || tagRight)
                     total +=
-                        MARKS[left + right][leftUnplace ^ rightUnplace] * 2;
+                        MARKS[left + right][leftUnplace ^ rightUnplace] * 5;
                 else
                     total += MARKS[left + right][leftUnplace ^ rightUnplace];
             }
@@ -561,8 +561,11 @@ void Agent::Update(int x, int y, int color) {
     }
     // 修改完成后, 在8*4范围内修改空闲点的权值
     for (int dir = 0; dir < 8; dir++) {
+        int preState = INVALID;
         for (int off = 1; off < 5; off++) {
-            if (myBoard.RelativePosState(x, y, dir, off) == UNPLACE) {
+            int state = myBoard.RelativePosState(x, y, dir, off);
+            if (state == INVALID) break;
+            if (state == UNPLACE) {
                 int i = x + dr[dir] * off, j = y + dc[dir] * off;
 // 删除现存权值记录
 #ifndef ONLINE_JUDGE
@@ -591,8 +594,11 @@ void Agent::Update(int x, int y, int color) {
                     i, j, max(weight[WHITE][i][j], weight[BLACK][i][j])});
                 // nextPos[WHITE].insert(Position{i, j, weight[WHITE][i][j]});
                 // nextPos[BLACK].insert(Position{i, j, weight[BLACK][i][j]});
+                // break;
+                if (off > 1 && preState == UNPLACE) break;
+                preState = state;
+            } else if (preState == !state)
                 break;
-            }
         }
     }
 }

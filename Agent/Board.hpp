@@ -151,7 +151,7 @@ LL Board::MarkOfPoint(int curX, int curY, int playerColor) {
                         MARKS[left + right][leftUnplace ^ rightUnplace] * 50;
                 else if (tagLeft || tagRight)
                     total +=
-                        MARKS[left + right][leftUnplace ^ rightUnplace] * 2;
+                        MARKS[left + right][leftUnplace ^ rightUnplace] * 5;
                 else
                     total += MARKS[left + right][leftUnplace ^ rightUnplace];
             }
