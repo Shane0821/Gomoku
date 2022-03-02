@@ -60,7 +60,7 @@ const LL FARLIVETWOMARK = 1000;
 const LL SLEEPTWOMARK = 500;
 const LL ONEMARK = 1;
 
-int SEARCHCNT[] = {0, 7, 7, 6, 6, 5, 5, 5, 5, 5, 225};
+int SEARCHCNT[] = {0, 10, 10, 8, 8, 8, 8, 8, 8, 8, 225};
 const LL MARKS[][2] = {{10, 1},
                        {1000, 100},
                        {100000, 20000},
@@ -451,7 +451,7 @@ void Agent::Run() {
 #ifndef ITERATIVE_DEEPENING
     MinMaxSearch(SEARCH_DEPTH, -INF, INF, color);
 #else
-    for (int i = 8; i <= SEARCH_DEPTH; i += 2) {
+    for (int i = 6; i <= SEARCH_DEPTH; i += 2) {
         iterDepth = i;
         MinMaxSearch(i, -INF, INF, color);
     }
@@ -604,7 +604,8 @@ void Agent::Update(int x, int y, int color) {
 }
 
 LL Agent::Evaluate(int color) {
-    return sumWeight[color] * 2 - sumWeight[color ^ 1];
+    return color == BLACK ? sumWeight[color] * 4 - sumWeight[color ^ 1]
+                          : sumWeight[color] - sumWeight[color ^ 1] * 4;
 }
 
 #endif
