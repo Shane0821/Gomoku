@@ -60,7 +60,7 @@ const LL FARLIVETWOMARK = 1000;
 const LL SLEEPTWOMARK = 500;
 const LL ONEMARK = 1;
 
-int SEARCHCNT[] = {0, 6, 6, 6, 6, 8, 8, 8, 8, 8, 225};
+int SEARCHCNT[] = {0, 8, 8, 8, 8, 8, 8, 8, 8, 8, 225};
 const LL MARKS[][2] = {{5, 1},
                        {1000, 100},
                        {100000, 20000},
@@ -216,25 +216,36 @@ LL Board::MarkOfPoint(int curX, int curY, int playerColor) {
         int leftUnplace = RelativePosState(curX, curY, i, -left - 1) == UNPLACE,
             rightUnplace =
                 RelativePosState(curX, curY, i, right + 1) == UNPLACE;
-        int leftLeftEq =
-                RelativePosState(curX, curY, i, -left - 2) == playerColor,
-            rightRightEq =
-                RelativePosState(curX, curY, i, right + 2) == playerColor;
 
         if (leftUnplace || rightUnplace) {
             if (left + right == 3)
                 total += MARKS[left + right][leftUnplace ^ rightUnplace];
             else {
-                bool tagLeft = (leftUnplace & leftLeftEq),
-                     tagRight = (rightUnplace & rightRightEq);
-                if (tagLeft && tagRight)
+                int leftLeft = 0, rightRight = 0;
+                if (leftUnplace) {
+                    while (
+                        left + 2 + leftLeft < 4 &&
+                        RelativePosState(curX, curY, i, -left - 2 - leftLeft) ==
+                            playerColor)
+                        leftLeft++;
+                }
+                if (rightUnplace) {
+                    while (right + 2 + rightRight < 4 &&
+                           RelativePosState(curX, curY, i,
+                                            right + 2 + rightRight) ==
+                               playerColor)
+                        rightRight++;
+                }
+
+                if (leftLeft && rightRight)
                     total +=
                         MARKS[left + right][leftUnplace ^ rightUnplace] * 80;
-                else if (tagLeft || tagRight)
-                    total +=
-                        MARKS[left + right][leftUnplace ^ rightUnplace] * 5;
                 else
                     total += MARKS[left + right][leftUnplace ^ rightUnplace];
+
+                // more discussions
+                if (leftLeft) total += MARKS[leftLeft][1];
+                if (rightRight) total += MARKS[rightRight][1];
             }
         }
     }
@@ -604,8 +615,8 @@ void Agent::Update(int x, int y, int color) {
 }
 
 LL Agent::Evaluate(int color) {
-    return color == BLACK ? sumWeight[color] * 4 - sumWeight[color ^ 1]
-                          : sumWeight[color] - sumWeight[color ^ 1] * 4;
+    return color == BLACK ? sumWeight[color] * 5 - sumWeight[color ^ 1]
+                          : sumWeight[color] - sumWeight[color ^ 1] * 5;
 }
 
 #endif
