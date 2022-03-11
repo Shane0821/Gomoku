@@ -490,9 +490,6 @@ void Agent::DetermineColor(const Json::Value &input) {
 }
 
 void Agent::Init() {
-    bestDropPos = POS_UNDEFINED;
-    bestScore = -INF;
-
 #ifdef ONLINE_JUDGE
     // 读入JSON
     string str;
@@ -533,6 +530,10 @@ void Agent::Init() {
             }
         }
     }
+    bestDropPos = nextPos[MAX].size() ? make_pair(nextPos[MAX].begin()->x,
+                                                  nextPos[MAX].begin()->y)
+                                      : POS_UNDEFINED;
+    bestScore = -INF;
 }
 
 void Agent::Update(int x, int y, int color) {
