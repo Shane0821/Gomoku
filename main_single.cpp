@@ -60,7 +60,7 @@ const LL FARLIVETWOMARK = 1000;
 const LL SLEEPTWOMARK = 500;
 const LL ONEMARK = 1;
 
-int SEARCHCNT[] = {0, 8, 8, 8, 8, 8, 8, 8, 8, 8, 225};
+int SEARCHCNT[] = {0, 6, 6, 8, 8, 8, 8, 8, 8, 8, 225};
 const LL MARKS[][2] = {{5, 1},
                        {1000, 100},
                        {100000, 20000},
@@ -237,15 +237,9 @@ LL Board::MarkOfPoint(int curX, int curY, int playerColor) {
                         rightRight++;
                 }
 
-                if (leftLeft && rightRight)
-                    total +=
-                        MARKS[left + right][leftUnplace ^ rightUnplace] * 80;
-                else
-                    total += MARKS[left + right][leftUnplace ^ rightUnplace];
-
-                // more discussions
-                if (leftLeft) total += MARKS[leftLeft][1];
-                if (rightRight) total += MARKS[rightRight][1];
+                total += max({MARKS[left + right][leftUnplace ^ rightUnplace],
+                              MARKS[leftLeft + left][1] / 2,
+                              MARKS[rightRight + right][1] / 2});
             }
         }
     }
