@@ -60,7 +60,7 @@ const LL FARLIVETWOMARK = 1000;
 const LL SLEEPTWOMARK = 500;
 const LL ONEMARK = 1;
 
-int SEARCHCNT[] = {0, 6, 6, 8, 8, 8, 8, 8, 8, 8, 225};
+int SEARCHCNT[] = {0, 8, 8, 8, 8, 8, 8, 8, 8, 8, 225};
 const LL MARKS[][2] = {{5, 1},
                        {1000, 100},
                        {100000, 20000},
@@ -238,8 +238,8 @@ LL Board::MarkOfPoint(int curX, int curY, int playerColor) {
                 }
 
                 total += max({MARKS[left + right][leftUnplace ^ rightUnplace],
-                              MARKS[leftLeft + left][1] / 2,
-                              MARKS[rightRight + right][1] / 2});
+                              MARKS[leftLeft + left][1] / 3,
+                              MARKS[rightRight + right][1] / 3});
             }
         }
     }
@@ -610,7 +610,7 @@ void Agent::Update(int x, int y, int color) {
 }
 
 LL Agent::Evaluate(int color) {
-    return color == BLACK ? sumWeight[color] * 5 - sumWeight[color ^ 1]
+    return color == BLACK ? sumWeight[color] * 4 - sumWeight[color ^ 1]
                           : sumWeight[color] - sumWeight[color ^ 1] * 5;
 }
 
