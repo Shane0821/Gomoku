@@ -305,7 +305,8 @@ void Agent::Update(int x, int y, int color) {
 }
 
 LL Agent::Evaluate(int color) {
-    return sumWeight[color] * 2 - sumWeight[color ^ 1];
+    return color == BLACK ? sumWeight[color] * 5 - sumWeight[color ^ 1]
+                          : sumWeight[color] * 0.9 - sumWeight[color ^ 1];
 }
 
 #endif

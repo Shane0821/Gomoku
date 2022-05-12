@@ -135,25 +135,30 @@ LL Board::MarkOfPoint(int curX, int curY, int playerColor) {
         int leftUnplace = RelativePosState(curX, curY, i, -left - 1) == UNPLACE,
             rightUnplace =
                 RelativePosState(curX, curY, i, right + 1) == UNPLACE;
-        int leftLeftEq =
-                RelativePosState(curX, curY, i, -left - 2) == playerColor,
-            rightRightEq =
-                RelativePosState(curX, curY, i, right + 2) == playerColor;
 
         if (leftUnplace || rightUnplace) {
             if (left + right == 3)
                 total += MARKS[left + right][leftUnplace ^ rightUnplace];
             else {
-                bool tagLeft = (leftUnplace & leftLeftEq),
-                     tagRight = (rightUnplace & rightRightEq);
-                if (tagLeft && tagRight)
-                    total +=
-                        MARKS[left + right][leftUnplace ^ rightUnplace] * 50;
-                else if (tagLeft || tagRight)
-                    total +=
-                        MARKS[left + right][leftUnplace ^ rightUnplace] * 5;
-                else
-                    total += MARKS[left + right][leftUnplace ^ rightUnplace];
+                int leftLeft = 0, rightRight = 0;
+                if (leftUnplace) {
+                    while (
+                        left + 2 + leftLeft < 4 &&
+                        RelativePosState(curX, curY, i, -left - 2 - leftLeft) ==
+                            playerColor)
+                        leftLeft++;
+                }
+                if (rightUnplace) {
+                    while (right + 2 + rightRight < 4 &&
+                           RelativePosState(curX, curY, i,
+                                            right + 2 + rightRight) ==
+                               playerColor)
+                        rightRight++;
+                }
+
+                total += max({MARKS[left + right][leftUnplace ^ rightUnplace],
+                              MARKS[leftLeft + left][1] / 8,
+                              MARKS[rightRight + right][1] / 8});
             }
         }
     }
