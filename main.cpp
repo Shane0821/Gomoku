@@ -4,7 +4,7 @@
 #endif
 #include <bits/stdc++.h>
 
-#include "Agent/Agent.hpp"
+#include "Class/Agent.hpp"
 
 using namespace std;
 
