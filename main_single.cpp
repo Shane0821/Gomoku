@@ -489,9 +489,9 @@ void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, int w,
     m_sumPlayerScore[player] -= m_playerMoveScore[player][move.x][move.y];
 
     m_playerMoveScore[player][move.x][move.y] -= m_dirScore[player][dir][move.x][move.y];
-    if (m_dirScore[player][dir][move.x][move.y] >=
+    if (m_dirScore[player][dir][move.x][move.y] ==
             Scorer::TYPE_SCORES[Scorer::SLEEP_FOUR] ||
-        m_dirScore[player][dir][move.x][move.y] >=
+        m_dirScore[player][dir][move.x][move.y] ==
             Scorer::TYPE_SCORES[Scorer::LIVE_THREE]) {
         m_cntKill[player][move.x][move.y]--;
         if (m_cntKill[player][move.x][move.y] == 1) {
@@ -502,8 +502,8 @@ void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, int w,
 
     m_dirScore[player][dir][move.x][move.y] = w;
     m_playerMoveScore[player][move.x][move.y] += w;
-    if (w >= Scorer::TYPE_SCORES[Scorer::SLEEP_FOUR] ||
-        w >= Scorer::TYPE_SCORES[Scorer::LIVE_THREE]) {
+    if (w == Scorer::TYPE_SCORES[Scorer::SLEEP_FOUR] ||
+        w == Scorer::TYPE_SCORES[Scorer::LIVE_THREE]) {
         m_cntKill[player][move.x][move.y]++;
         if (m_cntKill[player][move.x][move.y] == 2) {
             m_playerMoveScore[player][move.x][move.y] +=
@@ -1147,7 +1147,7 @@ void Core::updateMoveAround(int x, int y, Board::CHESS_COLOR player) {
 }
 
 int Core::evaluate() const {
-    return m_moveGenerator.sumPlayerScore(Board::CHESS_COLOR::BLACK) * 5 -
+    return m_moveGenerator.sumPlayerScore(Board::CHESS_COLOR::BLACK) * 6 -
            m_moveGenerator.sumPlayerScore(Board::CHESS_COLOR::WHITE);
 }
 
