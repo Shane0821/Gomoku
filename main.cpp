@@ -1,18 +1,10 @@
-#ifdef RELEASE
-#pragma GCC optimize(3, \
-                     "Ofast,no-stack-protector,unroll-loops,fast-math,inline")
-#endif
-#include <bits/stdc++.h>
+#pragma GCC optimize("O3")
 
-#include "Agent/Agent.hpp"
-
-using namespace std;
+#include "judger.h"
 
 int main() {
-    srand(time(0));
-    ios::sync_with_stdio(false);
-    auto ai = new Agent;
-    ai->Run();
-    delete ai;
+    Judger judger;
+    // Judger::JUDGER_MODE = Judger::MODE::ONLINE_JUDGE;
+    judger.startGame();
     return 0;
 }

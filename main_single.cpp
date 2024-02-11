@@ -1,618 +1,1251 @@
-#define ONLINE_JUDGE
-#define ITERATIVE_DEEPENING
-#define RELEASE
-#ifdef RELEASE
-#pragma GCC optimize(3, \
-                     "Ofast,no-stack-protector,unroll-loops,fast-math,inline")
-#endif
-#include <bits/stdc++.h>
-using namespace std;
-// #include <Const.h>
-#ifndef CONST
-#define CONST
-#include <bits/stdc++.h>
-// 放置一些公用常量，不要格式化
+// for online submission only
 
-#define debug(x) cerr << #x << " = " << x << endl
+#pragma GCC optimize("O3")
 
-//#define ONLINE_JUDGE
-
-typedef long long LL;
-
-const LL INF = 1E16;
-
-const LL TIME_OUT = INF + 1;
-// bestDropId 表示未设置
-const pair<int, int> POS_UNDEFINED = {-1, -1};
-
-// 最大分支数
-const int BRANCH_LIMIT = 20;
-
-// 搜索深度默认为 6, 优化后再升级
-const int SEARCH_DEPTH = 8;
-
-// 各局面价值表，待完善
-const int valueTable = {0};
-// 棋盘大小
-const int SIZE = 15;
-// 方向增量
-const int dr[] = {0, 1, 1, 1, 0, -1, -1, -1};
-const int dc[] = {1, 1, 0, -1, -1, 1, 0, -1};
-
-// 每个位置落子类型：
-// -1 无子，0 白，1 黑，2 下标非法
-const int UNPLACE = -1;
-const int WHITE = 0;
-const int BLACK = 1;
-const int MAX = 2;
-const int INVALID = -2;
-
-// 棋子类型得分，参数可以调整
-// 拆分远近活三，远中近活二
-const LL LIVEFOURMARK = 2000000;
-const LL SLEEPFOURMARK = 1000000;
-const LL NEARLIVETHREEMARK = 102000;
-const LL FARLIVETHREEMARK = 100000;
-const LL SLEEPTHREEMARK = 50000;
-const LL NEARLIVETWOMARK = 1200;
-const LL MIDLIVETWOMARK = 1050;
-const LL FARLIVETWOMARK = 1000;
-const LL SLEEPTWOMARK = 500;
-const LL ONEMARK = 1;
-
-int SEARCHCNT[] = {0, 8, 8, 8, 8, 10, 10, 10, 225};
-const LL MARKS[][2] = {{10, 1},
-                       {1000, 100},
-                       {100000, 20000},
-                       {10000000, 200000},
-                       {1000000000, 1000000000}};
-
-const int BASE_MARK[15][15] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                               {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
-                               {0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0},
-                               {0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0},
-                               {0, 1, 2, 3, 4, 4, 4, 4, 4, 4, 4, 3, 2, 1, 0},
-                               {0, 1, 2, 3, 4, 5, 5, 5, 5, 5, 4, 3, 2, 1, 0},
-                               {0, 1, 2, 3, 4, 5, 6, 6, 6, 5, 4, 3, 2, 1, 0},
-                               {0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1, 0},
-                               {0, 1, 2, 3, 4, 5, 6, 6, 6, 5, 4, 3, 2, 1, 0},
-                               {0, 1, 2, 3, 4, 5, 5, 5, 5, 5, 4, 3, 2, 1, 0},
-                               {0, 1, 2, 3, 4, 4, 4, 4, 4, 4, 4, 3, 2, 1, 0},
-                               {0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0},
-                               {0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0},
-                               {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
-                               {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
-#endif
-#ifndef BOARD_H
-#define BOARD_H
-
-using namespace std;
-
-struct Board {
-    // 每个位置落子类型：-1 无子，0 白，1 黑
-    int boardState[SIZE][SIZE];
-
-    // 构造函数
-    Board();
-    // 输出棋盘
-    void Show();
-    // 落子
-    void PlaceAt(int, int, int);
-    // 取消落子
-    void UnPlaceAt(int, int);
-    // 全局检查五子
-    bool CheckFive(int);
-    // 上次落子位置周围检查五子
-    bool CheckFive(int, int, bool);
-    // 和当前点相对位置的格子状态
-    int RelativePosState(int, int, int, int);
-    // 判断当前点的得分情况, 详见函数处注释
-    LL MarkOfPoint(int, int, int);
-};
-
-Board::Board() {
-    for (int i = 0; i < SIZE; i++)
-        for (int j = 0; j < SIZE; j++) {
-            boardState[i][j] = UNPLACE;
-        }
-}
-
-void Board::Show() {
-    cout << "  ";
-    for (int i = 0; i < SIZE; i++)
-        cout << char(i < 10 ? (int)i + '0' : 'A' + (int)i - 10) << " ";
-    cout << endl;
-    for (int i = 0; i < SIZE; i++) {
-        cout << char(i < 10 ? (int)i + '0' : 'A' + (int)i - 10) << "|";
-        for (int j = 0; j < SIZE; j++) {
-            if (boardState[i][j] == -1)
-                cout << "* ";
-            else
-                cout << (int)boardState[i][j] << " ";
-        }
-        cout << endl;
-    }
-}
-
-void Board::PlaceAt(int x, int y, int color) {
-    if (x >= 0 && x < SIZE && y >= 0 && y < SIZE)
-        boardState[(int)x][(int)y] = color;
-
-#ifndef ONLINE_JUDGE
-    cout << "Chess Placed at: "
-         << "(" << (int)x << ", " << (int)y << ")" << endl;
-#endif
-}
-
-void Board::UnPlaceAt(int x, int y) { boardState[x][y] = -1; }
-
-bool Board::CheckFive(int color) {
-    // 遍历每个位置
-    for (int i = 0; i < SIZE; i++)
-        for (int j = 0; j < SIZE; j++) {
-            if (boardState[i][j] != color) continue;
-            // 遍历 4 个方向，另外 4 个等价
-            for (int k = 0; k < 4; k++) {
-                int ti = i, tj = j;
-                // 遍历方向上每个棋子
-                for (int s = 1; s <= 4; s++) {
-                    ti += dr[k];
-                    tj += dc[k];
-                    if (ti < 0 || ti >= SIZE || tj < 0 || tj >= SIZE) continue;
-                    if (boardState[ti][tj] != color) break;
-                    if (s == 4) return true;
-                }
-            }
-        }
-    return false;
-}
-
-bool Board::CheckFive(int i, int j, bool color) {
-    // 遍历 4 个方向，另外 4 个等价
-    for (int k = 0; k < 4; k++) {
-        // 遍历每个棋子
-        int cnt = 0;
-        for (int s = 1; s <= 4; s++) {
-            int ti = i + s * dr[k];
-            int tj = j + s * dc[k];
-            if (ti < 0 || ti >= SIZE || tj < 0 || tj >= SIZE) break;
-            if (boardState[ti][tj] != color) break;
-            cnt++;
-        }
-        if (cnt >= 4) return true;
-        for (int s = 1; s <= 4; s++) {
-            int ti = i - s * dr[k];
-            int tj = j - s * dc[k];
-            if (ti < 0 || ti >= SIZE || tj < 0 || tj >= SIZE) break;
-            if (boardState[ti][tj] != color) break;
-            cnt++;
-        }
-        if (cnt >= 4) return true;
-    }
-    return false;
-}
-
-int Board::RelativePosState(int curX, int curY, int direction, int offset) {
-    curX = curX + dr[direction] * offset;
-    curY = curY + dc[direction] * offset;
-    if (curX < 0 || curX >= SIZE || curY < 0 || curY >= SIZE) {
-        return INVALID;
-    }
-    return boardState[curX][curY];
-}
-
-LL Board::MarkOfPoint(int curX, int curY, int playerColor) {
-    LL total = 0;
-    for (int i = 0; i < 4; i++) {
-        int left = 0, right = 0;
-        while (RelativePosState(curX, curY, i, -left - 1) == playerColor)
-            left++;
-        while (RelativePosState(curX, curY, i, right + 1) == playerColor)
-            right++;
-        if (left + right >= 4) {
-            return MARKS[4][0];
-        }
-
-        int leftUnplace = RelativePosState(curX, curY, i, -left - 1) == UNPLACE,
-            rightUnplace =
-                RelativePosState(curX, curY, i, right + 1) == UNPLACE;
-        int leftLeftEq =
-                RelativePosState(curX, curY, i, -left - 2) == playerColor,
-            rightRightEq =
-                RelativePosState(curX, curY, i, right + 2) == playerColor;
-
-        if (leftUnplace || rightUnplace) {
-            if (left + right == 3)
-                total += MARKS[left + right][leftUnplace ^ rightUnplace];
-            else {
-                bool tagLeft = (leftUnplace & leftLeftEq),
-                     tagRight = (rightUnplace & rightRightEq);
-                if (tagLeft && tagRight)
-                    total +=
-                        MARKS[left + right][leftUnplace ^ rightUnplace] * 100;
-                else if (tagLeft || tagRight)
-                    total +=
-                        MARKS[left + right][leftUnplace ^ rightUnplace] * 5;
-                else
-                    total += MARKS[left + right][leftUnplace ^ rightUnplace];
-            }
-        }
-    }
-    return total + BASE_MARK[curX][curY];
-}
-
-#endif
-// #include <Position.hpp>
-#ifndef POSITION_H
-
-struct Position {
-    int x, y;
-    LL w;
-};
-
-bool operator<(const Position &lhs, const Position &rhs) {
-    return (lhs.w == rhs.w)
-               ? ((lhs.x == rhs.x) ? (lhs.y < rhs.y) : (lhs.x < rhs.x))
-               : (lhs.w > rhs.w);
-}
-
-#ifndef TIMER_H
-#define TIMER_H
-#include <bits/stdc++.h>
-
-using namespace std;
-
-struct Timer {
-    time_t preTime;
-    time_t preline;
-    int16_t cnt;
-
-    Timer() {
-        preTime = 0;
-        preline = 0;
-        cnt = 0;
-    }
-
-    // how to use: timer->prepare(__LINE__);
-    void prepare(int line) {
-        cnt = 1;
-        preline = line;
-        preTime = clock();
-    }
-    // how to use: timer->getTimePass(__LINE__);
-    void getTimePass(int line) {
-        if (cnt != 1) {
-            cerr << "line " << line << ": ";
-            cerr << "Please call prepare() first!" << endl;
-            return;
-        }
-        cout << "Time taken from line " + to_string(preline) + " to line " +
-                    to_string(line) + " is: ";
-        auto tmp = clock() - preTime;
-        cout << setprecision(3) << fixed << (1.0 * tmp / CLOCKS_PER_SEC)
-             << endl;
-        cnt = 0;
-    }
-};
-
-#endif
-
-#endif
-// #include <Agent.hpp>
-#ifndef AGENT_HPP
-#define AGENT_HPP
-
-#include <bits/stdc++.h>
+#include <algorithm>
+#include <ctime>
+#include <iostream>
+#include <random>
+#include <vector>
 
 #include "jsoncpp/json.h"
 
-using namespace std;
+#define max(a, b) ((a) >= (b) ? (a) : (b))
+#define min(a, b) ((a) <= (b) ? (a) : (b))
 
-struct Agent {
-    // 默认后手，持白子
-    int color;
-    // 当前迭代深度
-    int iterDepth;
-    //计时器
-    Timer *myTimer;
-    clock_t st;
-    // 棋盘
-    Board myBoard;
-    // 最优落子
-    pair<int, int> bestDropPos;
-    // 最高得分
-    LL bestScore;
-    // 落子位置和对应的权重, 用于在set中查找.
-    // -1表示有棋子的点
-    LL weight[2][15][15];
-    // 按照权排序的落子位置集合
-    set<Position> nextPos[3];
-    // 白子和黑子的权值之和
-    LL sumWeight[2];
+class Board {
+   public:
+    enum CHESS_COLOR {
+        WHITE = 0,
+        BLACK = 1,
+    };
 
-    // 构造函数
-    Agent() {
-        color = WHITE;
-        myTimer = nullptr;
-        iterDepth = SEARCH_DEPTH;
-    }
-    ~Agent() { delete myTimer; }
-    // 运行
-    void Run();
-    // 判断AI是否为先手
-    void DetermineColor(const Json::Value &);
-    // 局面估值
-    LL Evaluate(int);
-    // 更改一个点的颜色, 同时更新附近的 9 * 4 格子内的空闲点权值信息
-    void Update(int x, int y, int color);
-    // 局面预处理
-    void Init();
-    // 搜素
-    LL MinMaxSearch(int, LL, LL, int);
-    // Jason形式输出落子
-    void PrintJson();
+    enum BOARD_STATE {
+        INVALID = -1,
+        WHITE_CHESS = CHESS_COLOR::WHITE,
+        BLACK_CHESS = CHESS_COLOR::BLACK,
+        UNPLACE = 2
+    };
+
+    Board();
+
+    /** Update state at (x, y) */
+    void placeAt(int x, int y, CHESS_COLOR color);
+
+    void unplaceAt(int x, int y);
+
+    /** Get the state of (x, y) */
+    BOARD_STATE getState(int x, int y) const;
+
+    int cntNeighbour(int x, int y) const { return m_cntNeighbour[x][y]; }
+
+    const static int BOARD_SIZE = 15;
+    const static int dr[4];
+    const static int dc[4];
+
+   private:
+    BOARD_STATE m_boardState[BOARD_SIZE][BOARD_SIZE];
+    int m_cntNeighbour[BOARD_SIZE][BOARD_SIZE];
 };
 
-LL Agent::MinMaxSearch(int depth, LL alpha, LL beta, int curColor) {
-    // 临近超时
-    if (1.0 * (clock() - st) / CLOCKS_PER_SEC >= 0.98) {
-        // PrintJson();
-        // exit(0);
-        // if (curColor == color) return -INF - 1;
-        // return INF + 1;
-        return -TIME_OUT;
-    }
-    // 搜索完成估值返回
-    if (depth <= 0) return Evaluate(curColor);
-    // 无子可走
-    if (!nextPos[MAX].size()) return alpha;
-    auto pos = nextPos[MAX].begin();
-    for (int i = 0; i < SEARCHCNT[depth] && pos != nextPos[MAX].end();
-         i++, pos++) {
-        auto x = pos->x, y = pos->y;
-        auto w = pos->w;
+const int Board::dr[4] = {0, 1, 1, 1};
+const int Board::dc[4] = {1, 1, 0, -1};
 
-        // 继续搜索
-        LL val;
-        if (weight[curColor][x][y] >= MARKS[4][0]) {
-            val = INF - (iterDepth - depth);
-        } else {
-            // 落子
-            Update(x, y, curColor);
-            val = -MinMaxSearch(depth - 1, -beta, -alpha, !curColor);
-            // 取消落子 更新得分
-            Update(x, y, UNPLACE);
-            pos = nextPos[MAX].find(Position{x, y, w});
-#ifndef ONLINE_JUDGE
-            assert(pos != nextPos[MAX].end());
-#endif
+Board::Board() {
+    for (int i = 0; i < BOARD_SIZE; i++)
+        for (int j = 0; j < BOARD_SIZE; j++) {
+            m_boardState[i][j] = UNPLACE;
+            m_cntNeighbour[i][j] = 0;
         }
 
-        if (val == TIME_OUT) return -TIME_OUT;
-
-        if (depth == iterDepth &&
-            (val > bestScore || bestDropPos == POS_UNDEFINED))
-            bestScore = val, bestDropPos = {x, y};
-        if (val >= beta) return val;
-        if (val > alpha) alpha = val;
-    }
-    return alpha;
+    for (int i = 6; i <= 8; i++)
+        for (int j = 6; j <= 8; j++) {
+            m_cntNeighbour[i][j] = 1;
+        }
 }
 
-void Agent::Run() {
-#ifndef ONLINE_JUDGE
-    myBoard.Show();
-    while (true) {
-        Init();
-        int x, y;
-        cout << "Your drop position: ";
-        cin >> x >> y;
-        if (myBoard.RelativePosState(x, y, 0, 0) != UNPLACE) {
-            cout << "This position is already occupied!" << endl;
-            continue;
-        }
-        Update(x, y, BLACK);
-        if (myBoard.CheckFive(BLACK)) {
-            myBoard.Show();
-            cout << "you win" << endl;
-            break;
-        }
-        myTimer = new Timer;
-        myTimer->prepare(__LINE__);
-
-        st = clock();
-#ifndef ITERATIVE_DEEPENING
-        MinMaxSearch(SEARCH_DEPTH, -INF, INF, color);
-#else
-        for (int i = 2; i <= SEARCH_DEPTH; i += 2) {
-            iterDepth = i;
-            MinMaxSearch(i, -INF, INF, color);
-        }
-#endif
-
-        myTimer->getTimePass(__LINE__);
-        cout << "Opponent: " << bestDropPos.first << " " << bestDropPos.second
-             << endl;
-        // 落子
-        Update(bestDropPos.first, bestDropPos.second, WHITE);
-        // debug(nextPos[WHITE].size());
-        // debug(nextPos[BLACK].size());
-        debug(nextPos[MAX].size());
-        debug(bestScore);
-        myBoard.Show();
-        if (myBoard.CheckFive(WHITE)) {
-            cout << "you lose" << endl;
-            break;
-        }
+Board::BOARD_STATE Board::getState(int x, int y) const {
+    if (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE) {
+        return BOARD_STATE::INVALID;
     }
-#else
-    Init();
-    st = clock();
-#ifndef ITERATIVE_DEEPENING
-    MinMaxSearch(SEARCH_DEPTH, -INF, INF, color);
-#else
-    for (int i = 6; i <= SEARCH_DEPTH; i += 2) {
-        iterDepth = i;
-        MinMaxSearch(i, -INF, INF, color);
-    }
-#endif
-    // assert(bestScore != INF + 1);
-    PrintJson();
-#endif
+    return m_boardState[x][y];
 }
 
-void Agent::PrintJson() {
-    Json::Value ret;
-    ret["response"]["x"] = bestDropPos.first;
-    ret["response"]["y"] = bestDropPos.second;
-    Json::FastWriter writer;
-    cout << writer.write(ret) << endl;
-}
+void Board::placeAt(int x, int y, Board::CHESS_COLOR color) {
+    m_boardState[x][y] = static_cast<BOARD_STATE>(color);
 
-void Agent::DetermineColor(const Json::Value &input) {
-    if (input["requests"][0u]["x"].asInt() == -1 &&
-        input["requests"][0u]["y"].asInt() == -1) {
-        color = BLACK;
-    } else {
-        color = WHITE;
+    for (int k = 0; k < 4; k++) {
+        int tx = x;
+        int ty = y;
+        for (int step = 1; step <= 2; step++) {
+            tx += dr[k];
+            ty += dc[k];
+            if (getState(tx, ty) == INVALID) break;
+            m_cntNeighbour[tx][ty]++;
+        }
+
+        tx = x;
+        ty = y;
+        for (int step = 1; step <= 2; step++) {
+            tx -= dr[k];
+            ty -= dc[k];
+            if (getState(tx, ty) == INVALID) break;
+            m_cntNeighbour[tx][ty]++;
+        }
     }
 }
 
-void Agent::Init() {
-    bestDropPos = POS_UNDEFINED;
-    bestScore = -INF;
+void Board::unplaceAt(int x, int y) {
+    m_boardState[x][y] = Board::BOARD_STATE::UNPLACE;
+    for (int k = 0; k < 4; k++) {
+        int tx = x;
+        int ty = y;
+        for (int step = 1; step <= 2; step++) {
+            tx += dr[k];
+            ty += dc[k];
+            if (getState(tx, ty) == INVALID) break;
+            m_cntNeighbour[tx][ty]--;
+        }
 
-#ifdef ONLINE_JUDGE
-    // 读入JSON
-    string str;
-    getline(cin, str);
-    Json::Reader reader;
-    Json::Value input;
-    reader.parse(str, input);
-    // 分析自己收到的输入和自己过往的输出，并恢复状态
-    int turnID = input["responses"].size();
-    DetermineColor(input);
-    for (int i = 0; i < turnID; i++) {
-        myBoard.PlaceAt(input["requests"][i]["x"].asInt(),
-                        input["requests"][i]["y"].asInt(), !color);
-        myBoard.PlaceAt(input["responses"][i]["x"].asInt(),
-                        input["responses"][i]["y"].asInt(), color);
+        tx = x;
+        ty = y;
+        for (int step = 1; step <= 2; step++) {
+            tx -= dr[k];
+            ty -= dc[k];
+            if (getState(tx, ty) == INVALID) break;
+            m_cntNeighbour[tx][ty]--;
+        }
     }
-    myBoard.PlaceAt(input["requests"][turnID]["x"].asInt(),
-                    input["requests"][turnID]["y"].asInt(), !color);
-#endif
+}
 
-    // 初始化 weight 和 nextPoss
-    sumWeight[0] = sumWeight[1] = 0;
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
-            // 如果位置上已有棋子, 标记权重为-1
-            // 否则计算权重, 并分别存放在weight和nextPos中
-            if (myBoard.boardState[i][j] != UNPLACE) {
-                weight[BLACK][i][j] = weight[WHITE][i][j] = -1;
-            } else {
-                weight[BLACK][i][j] = myBoard.MarkOfPoint(i, j, BLACK);
-                weight[WHITE][i][j] = myBoard.MarkOfPoint(i, j, WHITE);
-                sumWeight[BLACK] += weight[BLACK][i][j];
-                sumWeight[WHITE] += weight[WHITE][i][j];
-                nextPos[MAX].insert(Position{
-                    i, j, max(weight[WHITE][i][j], weight[BLACK][i][j])});
-                // nextPos[WHITE].insert(Position{i, j, weight[WHITE][i][j]});
-                // nextPos[BLACK].insert(Position{i, j, weight[BLACK][i][j]});
+class Scorer {
+   public:
+    enum Type {
+        FIVE = 0,
+        LIVE_FOUR = 1,
+        KILL = 2,
+        SLEEP_FOUR = 3,
+        LIVE_THREE = 4,
+        SLEEP_THREE = 5,
+        LIVE_TWO = 6,
+        SLEEP_TWO = 7,
+        BASE = 8
+    };
+
+    Scorer();
+    ~Scorer() { delete[] m_pTypeTable; }
+
+    int getScoreByLineState(int state) const { return TYPE_SCORES[m_pTypeTable[state]]; }
+
+    const static int CNT_STATES = 19683;
+    const static int CNT_TYPES = 9;
+    const static int TYPE_SCORES[CNT_TYPES];
+    const static int BASE_SCORES[Board::BOARD_SIZE][Board::BOARD_SIZE];
+
+   private:
+    Type *m_pTypeTable;
+};
+
+const int Scorer::TYPE_SCORES[CNT_TYPES] = {999999, 100000, 10000, 1000, 1200,
+                                            100,    120,    10,    0};
+
+const int Scorer::BASE_SCORES[Board::BOARD_SIZE][Board::BOARD_SIZE] = {
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+    {0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0},
+    {0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0},
+    {0, 1, 2, 3, 4, 4, 4, 4, 4, 4, 4, 3, 2, 1, 0},
+    {0, 1, 2, 3, 4, 5, 5, 5, 5, 5, 4, 3, 2, 1, 0},
+    {0, 1, 2, 3, 4, 5, 6, 6, 6, 5, 4, 3, 2, 1, 0},
+    {0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1, 0},
+    {0, 1, 2, 3, 4, 5, 6, 6, 6, 5, 4, 3, 2, 1, 0},
+    {0, 1, 2, 3, 4, 5, 5, 5, 5, 5, 4, 3, 2, 1, 0},
+    {0, 1, 2, 3, 4, 4, 4, 4, 4, 4, 4, 3, 2, 1, 0},
+    {0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0},
+    {0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0},
+    {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+
+Scorer::Scorer() {
+    m_pTypeTable = new Type[CNT_STATES];
+    for (int i = 0; i < CNT_STATES; i++) m_pTypeTable[i] = BASE;
+    m_pTypeTable[121] = FIVE;
+    m_pTypeTable[122] = SLEEP_FOUR;
+    m_pTypeTable[124] = SLEEP_FOUR;
+    m_pTypeTable[125] = SLEEP_THREE;
+    m_pTypeTable[130] = SLEEP_FOUR;
+    m_pTypeTable[131] = SLEEP_THREE;
+    m_pTypeTable[148] = SLEEP_FOUR;
+    m_pTypeTable[149] = SLEEP_THREE;
+    m_pTypeTable[151] = SLEEP_THREE;
+    m_pTypeTable[152] = SLEEP_TWO;
+    m_pTypeTable[202] = SLEEP_FOUR;
+    m_pTypeTable[203] = SLEEP_THREE;
+    m_pTypeTable[205] = SLEEP_THREE;
+    m_pTypeTable[206] = SLEEP_TWO;
+    m_pTypeTable[211] = SLEEP_THREE;
+    m_pTypeTable[212] = SLEEP_TWO;
+    m_pTypeTable[229] = SLEEP_THREE;
+    m_pTypeTable[230] = SLEEP_TWO;
+    m_pTypeTable[232] = SLEEP_TWO;
+    m_pTypeTable[233] = BASE;
+    m_pTypeTable[365] = FIVE;
+    m_pTypeTable[367] = SLEEP_FOUR;
+    m_pTypeTable[368] = SLEEP_FOUR;
+    m_pTypeTable[373] = SLEEP_FOUR;
+    m_pTypeTable[374] = SLEEP_FOUR;
+    m_pTypeTable[391] = SLEEP_FOUR;
+    m_pTypeTable[392] = SLEEP_FOUR;
+    m_pTypeTable[394] = SLEEP_THREE;
+    m_pTypeTable[395] = SLEEP_THREE;
+    m_pTypeTable[445] = SLEEP_FOUR;
+    m_pTypeTable[446] = SLEEP_FOUR;
+    m_pTypeTable[448] = SLEEP_THREE;
+    m_pTypeTable[449] = SLEEP_THREE;
+    m_pTypeTable[454] = SLEEP_THREE;
+    m_pTypeTable[455] = SLEEP_THREE;
+    m_pTypeTable[607] = FIVE;
+    m_pTypeTable[608] = LIVE_FOUR;
+    m_pTypeTable[610] = SLEEP_FOUR;
+    m_pTypeTable[611] = LIVE_THREE;
+    m_pTypeTable[616] = SLEEP_FOUR;
+    m_pTypeTable[617] = LIVE_THREE;
+    m_pTypeTable[634] = SLEEP_FOUR;
+    m_pTypeTable[635] = LIVE_THREE;
+    m_pTypeTable[637] = SLEEP_THREE;
+    m_pTypeTable[638] = LIVE_TWO;
+    m_pTypeTable[688] = SLEEP_FOUR;
+    m_pTypeTable[689] = LIVE_THREE;
+    m_pTypeTable[691] = SLEEP_THREE;
+    m_pTypeTable[692] = LIVE_TWO;
+    m_pTypeTable[697] = SLEEP_THREE;
+    m_pTypeTable[698] = LIVE_TWO;
+    m_pTypeTable[1096] = FIVE;
+    m_pTypeTable[1097] = FIVE;
+    m_pTypeTable[1102] = SLEEP_FOUR;
+    m_pTypeTable[1103] = SLEEP_FOUR;
+    m_pTypeTable[1120] = SLEEP_FOUR;
+    m_pTypeTable[1121] = SLEEP_FOUR;
+    m_pTypeTable[1123] = SLEEP_FOUR;
+    m_pTypeTable[1124] = SLEEP_FOUR;
+    m_pTypeTable[1174] = SLEEP_FOUR;
+    m_pTypeTable[1175] = SLEEP_FOUR;
+    m_pTypeTable[1177] = SLEEP_FOUR;
+    m_pTypeTable[1178] = SLEEP_FOUR;
+    m_pTypeTable[1183] = SLEEP_THREE;
+    m_pTypeTable[1184] = SLEEP_THREE;
+    m_pTypeTable[1336] = FIVE;
+    m_pTypeTable[1337] = LIVE_FOUR;
+    m_pTypeTable[1339] = LIVE_FOUR;
+    m_pTypeTable[1340] = SLEEP_FOUR;
+    m_pTypeTable[1345] = SLEEP_FOUR;
+    m_pTypeTable[1346] = LIVE_THREE;
+    m_pTypeTable[1363] = SLEEP_FOUR;
+    m_pTypeTable[1364] = LIVE_THREE;
+    m_pTypeTable[1366] = LIVE_THREE;
+    m_pTypeTable[1367] = SLEEP_THREE;
+    m_pTypeTable[1823] = FIVE;
+    m_pTypeTable[1825] = LIVE_FOUR;
+    m_pTypeTable[1826] = LIVE_FOUR;
+    m_pTypeTable[1831] = SLEEP_FOUR;
+    m_pTypeTable[1832] = SLEEP_FOUR;
+    m_pTypeTable[1849] = SLEEP_FOUR;
+    m_pTypeTable[1850] = SLEEP_FOUR;
+    m_pTypeTable[1852] = LIVE_THREE;
+    m_pTypeTable[1853] = LIVE_THREE;
+    m_pTypeTable[1903] = SLEEP_FOUR;
+    m_pTypeTable[1904] = SLEEP_FOUR;
+    m_pTypeTable[1906] = LIVE_THREE;
+    m_pTypeTable[1907] = LIVE_THREE;
+    m_pTypeTable[1912] = SLEEP_THREE;
+    m_pTypeTable[1913] = SLEEP_THREE;
+    m_pTypeTable[2065] = FIVE;
+    m_pTypeTable[2066] = LIVE_FOUR;
+    m_pTypeTable[2068] = SLEEP_FOUR;
+    m_pTypeTable[2069] = LIVE_THREE;
+    m_pTypeTable[2074] = SLEEP_FOUR;
+    m_pTypeTable[2075] = LIVE_THREE;
+    m_pTypeTable[2092] = SLEEP_FOUR;
+    m_pTypeTable[2093] = LIVE_THREE;
+    m_pTypeTable[2095] = SLEEP_THREE;
+    m_pTypeTable[2096] = LIVE_TWO;
+    m_pTypeTable[3289] = FIVE;
+    m_pTypeTable[3290] = FIVE;
+    m_pTypeTable[3307] = SLEEP_FOUR;
+    m_pTypeTable[3308] = SLEEP_FOUR;
+    m_pTypeTable[3310] = SLEEP_FOUR;
+    m_pTypeTable[3311] = SLEEP_FOUR;
+    m_pTypeTable[3361] = SLEEP_FOUR;
+    m_pTypeTable[3362] = SLEEP_FOUR;
+    m_pTypeTable[3364] = SLEEP_FOUR;
+    m_pTypeTable[3365] = SLEEP_FOUR;
+    m_pTypeTable[3370] = SLEEP_FOUR;
+    m_pTypeTable[3371] = SLEEP_FOUR;
+    m_pTypeTable[3523] = FIVE;
+    m_pTypeTable[3524] = LIVE_FOUR;
+    m_pTypeTable[3526] = LIVE_FOUR;
+    m_pTypeTable[3527] = SLEEP_FOUR;
+    m_pTypeTable[3532] = LIVE_FOUR;
+    m_pTypeTable[3533] = SLEEP_FOUR;
+    m_pTypeTable[3550] = SLEEP_FOUR;
+    m_pTypeTable[3551] = LIVE_THREE;
+    m_pTypeTable[3553] = LIVE_THREE;
+    m_pTypeTable[3554] = SLEEP_THREE;
+    m_pTypeTable[4010] = FIVE;
+    m_pTypeTable[4012] = LIVE_FOUR;
+    m_pTypeTable[4013] = LIVE_FOUR;
+    m_pTypeTable[4018] = LIVE_FOUR;
+    m_pTypeTable[4019] = LIVE_FOUR;
+    m_pTypeTable[4036] = SLEEP_FOUR;
+    m_pTypeTable[4037] = SLEEP_FOUR;
+    m_pTypeTable[4039] = LIVE_THREE;
+    m_pTypeTable[4040] = LIVE_THREE;
+    m_pTypeTable[4090] = SLEEP_FOUR;
+    m_pTypeTable[4091] = SLEEP_FOUR;
+    m_pTypeTable[4093] = LIVE_THREE;
+    m_pTypeTable[4094] = LIVE_THREE;
+    m_pTypeTable[4099] = LIVE_THREE;
+    m_pTypeTable[4100] = LIVE_THREE;
+    m_pTypeTable[5470] = FIVE;
+    m_pTypeTable[5471] = FIVE;
+    m_pTypeTable[5476] = LIVE_FOUR;
+    m_pTypeTable[5477] = LIVE_FOUR;
+    m_pTypeTable[5494] = SLEEP_FOUR;
+    m_pTypeTable[5495] = SLEEP_FOUR;
+    m_pTypeTable[5497] = SLEEP_FOUR;
+    m_pTypeTable[5498] = SLEEP_FOUR;
+    m_pTypeTable[5548] = SLEEP_FOUR;
+    m_pTypeTable[5549] = SLEEP_FOUR;
+    m_pTypeTable[5551] = SLEEP_FOUR;
+    m_pTypeTable[5552] = SLEEP_FOUR;
+    m_pTypeTable[5557] = LIVE_THREE;
+    m_pTypeTable[5558] = LIVE_THREE;
+    m_pTypeTable[5710] = FIVE;
+    m_pTypeTable[5711] = LIVE_FOUR;
+    m_pTypeTable[5713] = LIVE_FOUR;
+    m_pTypeTable[5714] = SLEEP_FOUR;
+    m_pTypeTable[5719] = SLEEP_FOUR;
+    m_pTypeTable[5720] = LIVE_THREE;
+    m_pTypeTable[5737] = SLEEP_FOUR;
+    m_pTypeTable[5738] = LIVE_THREE;
+    m_pTypeTable[5740] = LIVE_THREE;
+    m_pTypeTable[5741] = SLEEP_THREE;
+    m_pTypeTable[6197] = FIVE;
+    m_pTypeTable[6199] = LIVE_FOUR;
+    m_pTypeTable[6200] = LIVE_FOUR;
+    m_pTypeTable[6205] = SLEEP_FOUR;
+    m_pTypeTable[6206] = SLEEP_FOUR;
+    m_pTypeTable[6227] = LIVE_THREE;
+    m_pTypeTable[6277] = SLEEP_FOUR;
+    m_pTypeTable[6278] = SLEEP_FOUR;
+    m_pTypeTable[6280] = LIVE_THREE;
+    m_pTypeTable[6281] = LIVE_THREE;
+    m_pTypeTable[6286] = SLEEP_THREE;
+    m_pTypeTable[6287] = SLEEP_THREE;
+    m_pTypeTable[9868] = FIVE;
+    m_pTypeTable[9869] = FIVE;
+    m_pTypeTable[9871] = FIVE;
+    m_pTypeTable[9872] = FIVE;
+    m_pTypeTable[10084] = FIVE;
+    m_pTypeTable[10085] = LIVE_FOUR;
+    m_pTypeTable[10087] = LIVE_FOUR;
+    m_pTypeTable[10088] = SLEEP_FOUR;
+    m_pTypeTable[10093] = LIVE_FOUR;
+    m_pTypeTable[10094] = SLEEP_FOUR;
+    m_pTypeTable[10111] = SLEEP_FOUR;
+    m_pTypeTable[10112] = SLEEP_FOUR;
+    m_pTypeTable[10114] = SLEEP_FOUR;
+    m_pTypeTable[10115] = SLEEP_FOUR;
+    m_pTypeTable[10571] = FIVE;
+    m_pTypeTable[10573] = LIVE_FOUR;
+    m_pTypeTable[10574] = LIVE_FOUR;
+    m_pTypeTable[10579] = LIVE_FOUR;
+    m_pTypeTable[10580] = LIVE_FOUR;
+    m_pTypeTable[10597] = LIVE_FOUR;
+    m_pTypeTable[10598] = LIVE_FOUR;
+    m_pTypeTable[10600] = SLEEP_FOUR;
+    m_pTypeTable[10601] = SLEEP_FOUR;
+    m_pTypeTable[12031] = FIVE;
+    m_pTypeTable[12032] = FIVE;
+    m_pTypeTable[12037] = LIVE_FOUR;
+    m_pTypeTable[12038] = LIVE_FOUR;
+    m_pTypeTable[12055] = LIVE_FOUR;
+    m_pTypeTable[12056] = LIVE_FOUR;
+    m_pTypeTable[12058] = LIVE_FOUR;
+    m_pTypeTable[12059] = LIVE_FOUR;
+    m_pTypeTable[12271] = FIVE;
+    m_pTypeTable[12272] = LIVE_FOUR;
+    m_pTypeTable[12274] = LIVE_FOUR;
+    m_pTypeTable[12275] = SLEEP_FOUR;
+    m_pTypeTable[12280] = SLEEP_FOUR;
+    m_pTypeTable[12281] = LIVE_THREE;
+    m_pTypeTable[12298] = SLEEP_FOUR;
+    m_pTypeTable[12299] = LIVE_THREE;
+    m_pTypeTable[12301] = LIVE_THREE;
+    m_pTypeTable[12302] = LIVE_THREE;
+    m_pTypeTable[16411] = FIVE;
+    m_pTypeTable[16412] = FIVE;
+    m_pTypeTable[16429] = LIVE_FOUR;
+    m_pTypeTable[16430] = LIVE_FOUR;
+    m_pTypeTable[16432] = LIVE_FOUR;
+    m_pTypeTable[16433] = LIVE_FOUR;
+    m_pTypeTable[16645] = FIVE;
+    m_pTypeTable[16646] = LIVE_FOUR;
+    m_pTypeTable[16648] = LIVE_FOUR;
+    m_pTypeTable[16649] = SLEEP_FOUR;
+    m_pTypeTable[16654] = LIVE_FOUR;
+    m_pTypeTable[16655] = SLEEP_FOUR;
+    m_pTypeTable[16672] = SLEEP_FOUR;
+    m_pTypeTable[16673] = LIVE_THREE;
+    m_pTypeTable[16675] = LIVE_THREE;
+    m_pTypeTable[16676] = LIVE_THREE;
+    m_pTypeTable[17132] = FIVE;
+    m_pTypeTable[17134] = LIVE_FOUR;
+    m_pTypeTable[17135] = LIVE_FOUR;
+    m_pTypeTable[17140] = LIVE_FOUR;
+    m_pTypeTable[17141] = LIVE_FOUR;
+    m_pTypeTable[17158] = SLEEP_FOUR;
+    m_pTypeTable[17159] = SLEEP_FOUR;
+    m_pTypeTable[17161] = LIVE_THREE;
+    m_pTypeTable[17162] = LIVE_THREE;
+    m_pTypeTable[18592] = FIVE;
+    m_pTypeTable[18593] = FIVE;
+    m_pTypeTable[18598] = LIVE_FOUR;
+    m_pTypeTable[18599] = LIVE_FOUR;
+    m_pTypeTable[18616] = SLEEP_FOUR;
+    m_pTypeTable[18617] = SLEEP_FOUR;
+    m_pTypeTable[18619] = SLEEP_FOUR;
+    m_pTypeTable[18620] = SLEEP_FOUR;
+    m_pTypeTable[18832] = FIVE;
+    m_pTypeTable[18833] = LIVE_FOUR;
+    m_pTypeTable[18835] = LIVE_FOUR;
+    m_pTypeTable[18836] = SLEEP_FOUR;
+    m_pTypeTable[18841] = SLEEP_FOUR;
+    m_pTypeTable[18842] = LIVE_THREE;
+    m_pTypeTable[18859] = SLEEP_FOUR;
+    m_pTypeTable[18860] = LIVE_THREE;
+    m_pTypeTable[18862] = LIVE_THREE;
+    m_pTypeTable[18863] = SLEEP_THREE;
+}
+
+class MoveGenerator {
+   public:
+    struct Move {
+        int x = -1;
+        int y = -1;
+
+        bool operator==(const Move &other) const { return x == other.x && y == other.y; }
+    };
+
+    MoveGenerator();
+
+    void sortMoves();
+    void updateMoveScoreByDir(const Move &move, int dir, int w, Board::CHESS_COLOR);
+    void addMove(const Move &move);
+    void eraseMove(const Move &move);
+    bool existsMove(const Move &move);
+    std::vector<Move> generateMovesList(int cnt);
+    int playerMoveScore(const Move &move, Board::CHESS_COLOR color) const;
+    int maxMoveScore(const Move &move) const;
+    int sumPlayerScore(Board::CHESS_COLOR color) const;
+
+    const static int INVALID_MOVE_WEIGHT = -__INT32_MAX__;
+
+   public:
+    std::vector<Move> m_moves;
+    int m_recorded[Board::BOARD_SIZE][Board::BOARD_SIZE];
+    int m_dirScore[2][4][Board::BOARD_SIZE][Board::BOARD_SIZE];
+    int m_playerMoveScore[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
+    int m_maxScore[Board::BOARD_SIZE][Board::BOARD_SIZE];
+    int m_cntKill[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
+    int m_sumPlayerScore[2] = {0, 0};
+};
+
+MoveGenerator::MoveGenerator() {
+    for (int i = 0; i < Board::BOARD_SIZE; ++i) {
+        for (int j = 0; j < Board::BOARD_SIZE; ++j) {
+            m_maxScore[i][j] = INVALID_MOVE_WEIGHT;
+            m_recorded[i][j] = 0;
+        }
+    }
+}
+
+void MoveGenerator::sortMoves() {
+    std::sort(m_moves.begin(), m_moves.end(), [&](const Move &a, const Move &b) {
+        return m_maxScore[a.x][a.y] > m_maxScore[b.x][b.y];
+    });
+
+    // remove erased moves
+    while (m_moves.size() > 0) {
+        const Move &last = m_moves.back();
+        if (m_maxScore[last.x][last.y] != INVALID_MOVE_WEIGHT) break;
+        m_moves.pop_back();
+        m_recorded[last.x][last.y] = 0;
+    }
+}
+
+void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, int w,
+                                         Board::CHESS_COLOR player) {
+    m_sumPlayerScore[player] -= m_playerMoveScore[player][move.x][move.y];
+
+    m_playerMoveScore[player][move.x][move.y] -= m_dirScore[player][dir][move.x][move.y];
+    if (m_dirScore[player][dir][move.x][move.y] >=
+            Scorer::TYPE_SCORES[Scorer::SLEEP_FOUR] ||
+        m_dirScore[player][dir][move.x][move.y] >=
+            Scorer::TYPE_SCORES[Scorer::LIVE_THREE]) {
+        m_cntKill[player][move.x][move.y]--;
+        if (m_cntKill[player][move.x][move.y] == 1) {
+            m_playerMoveScore[player][move.x][move.y] -=
+                Scorer::TYPE_SCORES[Scorer::KILL];
+        }
+    }
+
+    m_dirScore[player][dir][move.x][move.y] = w;
+    m_playerMoveScore[player][move.x][move.y] += w;
+    if (w >= Scorer::TYPE_SCORES[Scorer::SLEEP_FOUR] ||
+        w >= Scorer::TYPE_SCORES[Scorer::LIVE_THREE]) {
+        m_cntKill[player][move.x][move.y]++;
+        if (m_cntKill[player][move.x][move.y] == 2) {
+            m_playerMoveScore[player][move.x][move.y] +=
+                Scorer::TYPE_SCORES[Scorer::KILL];
+        }
+    }
+
+    m_sumPlayerScore[player] += m_playerMoveScore[player][move.x][move.y];
+    m_maxScore[move.x][move.y] = max(m_playerMoveScore[player][move.x][move.y],
+                                     m_playerMoveScore[player ^ 1][move.x][move.y]);
+}
+
+void MoveGenerator::addMove(const Move &move) {
+    if (!m_recorded[move.x][move.y]) {
+        m_moves.push_back(move);
+        m_recorded[move.x][move.y] = 1;
+    }
+
+    int baseScore = Scorer::BASE_SCORES[move.x][move.y];
+
+    for (int i = 0; i < 4; i++) {
+        m_dirScore[Board::CHESS_COLOR::BLACK][i][move.x][move.y] =
+            m_dirScore[Board::CHESS_COLOR::WHITE][i][move.x][move.y] = 0;
+    }
+
+    m_playerMoveScore[Board::CHESS_COLOR::BLACK][move.x][move.y] =
+        m_playerMoveScore[Board::CHESS_COLOR::WHITE][move.x][move.y] = baseScore;
+
+    m_maxScore[move.x][move.y] = baseScore;
+
+    m_cntKill[Board::CHESS_COLOR::BLACK][move.x][move.y] =
+        m_cntKill[Board::CHESS_COLOR::WHITE][move.x][move.y] = 0;
+
+    m_sumPlayerScore[Board::CHESS_COLOR::BLACK] += baseScore;
+    m_sumPlayerScore[Board::CHESS_COLOR::WHITE] += baseScore;
+}
+
+void MoveGenerator::eraseMove(const Move &move) {
+    m_sumPlayerScore[Board::CHESS_COLOR::BLACK] -=
+        m_playerMoveScore[Board::CHESS_COLOR::BLACK][move.x][move.y];
+    m_sumPlayerScore[Board::CHESS_COLOR::WHITE] -=
+        m_playerMoveScore[Board::CHESS_COLOR::WHITE][move.x][move.y];
+
+    m_maxScore[move.x][move.y] = INVALID_MOVE_WEIGHT;
+}
+
+std::vector<MoveGenerator::Move> MoveGenerator::generateMovesList(int cnt) {
+    sortMoves();
+    return cnt < m_moves.size()
+               ? std::vector<Move>(m_moves.begin(), m_moves.begin() + cnt)
+               : m_moves;
+}
+
+bool MoveGenerator::existsMove(const Move &move) {
+    return m_maxScore[move.x][move.y] != INVALID_MOVE_WEIGHT;
+}
+
+int MoveGenerator::playerMoveScore(const Move &move, Board::CHESS_COLOR color) const {
+    return m_playerMoveScore[color][move.x][move.y];
+}
+
+int MoveGenerator::maxMoveScore(const Move &move) const {
+    return m_maxScore[move.x][move.y];
+}
+
+int MoveGenerator::sumPlayerScore(Board::CHESS_COLOR color) const {
+    return m_sumPlayerScore[color];
+}
+
+class Zobrist {
+   public:
+    Zobrist();
+
+    static unsigned long long generateRandomNumber();
+
+    unsigned long long update(int x, int y, Board::CHESS_COLOR);
+
+    unsigned long long getBoardHash() { return m_boardHash; }
+
+   private:
+    unsigned long long m_hashTable[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
+    unsigned long long m_boardHash;
+};
+
+Zobrist::Zobrist() {
+    for (int i = 0; i < 2; i++) {
+        for (int x = 0; x < Board::BOARD_SIZE; x++) {
+            for (int y = 0; y < Board::BOARD_SIZE; y++) {
+                m_hashTable[i][x][y] = generateRandomNumber();
+            }
+        }
+    }
+    m_boardHash = generateRandomNumber();
+}
+
+unsigned long long Zobrist::generateRandomNumber() {
+    static std::mt19937 mt(time(NULL));
+    static std::uniform_int_distribution<unsigned long long> dist(0, UINT64_MAX);
+    return dist(mt);
+}
+
+unsigned long long Zobrist::update(int x, int y, Board::CHESS_COLOR color) {
+    m_boardHash ^= m_hashTable[color][x][y];
+    return m_boardHash;
+}
+
+class TT {
+   public:
+    enum Flag { EMPTY, EXACT, LOWER, UPPER };
+
+    struct Item {
+        int depth;
+        unsigned long long hash;
+        int value;
+        Flag flag = EMPTY;
+    };
+
+    TT();
+    ~TT();
+
+    int find(unsigned long long hash, int depth, int alpha, int beta,
+             Board::CHESS_COLOR) const;
+    void insert(unsigned long long hash, int depth, int value, Flag, Board::CHESS_COLOR);
+
+    const static int LENGTH = 1 << 20;
+    const static int TT_NOT_HIT = __INT32_MAX__ - 1;
+
+   private:
+    int getHashIndex(unsigned long long hash) const { return hash & 0xFFFFF; }
+
+    Item *m_pTable[2] = {nullptr, nullptr};
+};
+
+TT::TT() {
+    m_pTable[0] = new Item[LENGTH];
+    m_pTable[1] = new Item[LENGTH];
+}
+
+TT::~TT() {
+    delete[] m_pTable[0];
+    delete[] m_pTable[1];
+}
+
+int TT::find(unsigned long long hash, int depth, int alpha, int beta,
+             Board::CHESS_COLOR color) const {
+    int idx = getHashIndex(hash);
+
+    Item &item = m_pTable[color][idx];
+
+    if (item.flag == EMPTY) return TT_NOT_HIT;
+
+    if (item.hash == hash && item.depth >= depth) {
+        switch (item.flag) {
+            case EXACT:
+                return item.value;
+            case LOWER:
+                if (item.value >= beta) return item.value;
+                break;
+            case UPPER:
+                if (item.value <= alpha) return item.value;
+                break;
+            default:
+                break;
+        }
+    }
+
+    return TT_NOT_HIT;
+}
+
+void TT::insert(unsigned long long hash, int depth, int value, Flag flag,
+                Board::CHESS_COLOR color) {
+    int idx = getHashIndex(hash);
+
+    Item &item = m_pTable[color][idx];
+
+    item.depth = depth;
+    item.hash = hash;
+    item.value = value;
+    item.flag = flag;
+}
+
+class Timer {
+   public:
+    Timer() { m_preTime = clock(); }
+
+    void recordCurrent() { m_preTime = clock(); }
+
+    int getTimePass() const {
+        return 1.0 * (clock() - m_preTime) / CLOCKS_PER_SEC * 1000;
+    }
+
+    const static int TIME_OUT = __INT32_MAX__;
+
+   private:
+    time_t m_preTime;
+};
+
+class Core {
+   public:
+    Core(Board *pBoard);
+    ~Core() {}
+
+    void setColor(Board::CHESS_COLOR color) { m_color = color; }
+    MoveGenerator::Move bestMove() const { return m_bestMove; }
+    int bestScore() const { return m_bestScore; }
+    int run();
+    void makeMove(int x, int y, Board::CHESS_COLOR);
+    void cancelMove(int x, int y);
+
+    static int MIN_SEARCH_DEPTH;
+    static int MAX_SEARCH_DEPTH;
+    static int KILL_DEPTH;
+    static bool ITERATIVE_DEEPENING;
+    static int BRANCH_FACTOR;
+    const static int INF = __INT32_MAX__ - 100;
+    const static int TIME_LIMIT = 988;
+
+   private:
+    int negMiniMaxSearch(int depth, Board::CHESS_COLOR player, int alpha, int beta);
+    void updateMoveAt(int x, int y, Board::CHESS_COLOR);
+    void updateMoveAt(int x, int y, int dir, Board::CHESS_COLOR);
+    void updateMoveAround(int x, int y, Board::CHESS_COLOR);
+
+    int evaluate() const;
+
+    Board *m_pBoard = nullptr;
+
+    Timer m_timer;
+    TT m_TT;
+    Zobrist m_zobristHash;
+    MoveGenerator m_moveGenerator;
+    Scorer m_scorer;
+
+    Board::CHESS_COLOR m_color = Board::CHESS_COLOR::WHITE;
+
+    MoveGenerator::Move m_bestMove;
+    int m_bestScore = -__INT32_MAX__;
+    int iterativeDepth = 4;
+};
+
+bool Core::ITERATIVE_DEEPENING = true;
+int Core::BRANCH_FACTOR = 16;
+int Core::MIN_SEARCH_DEPTH = 4;
+int Core::MAX_SEARCH_DEPTH = 10;
+int Core::KILL_DEPTH = 4;
+
+Core::Core(Board *pBoard) : m_pBoard(pBoard) {
+    if (!pBoard) return;
+    for (int i = 0; i < Board::BOARD_SIZE; i++) {
+        for (int j = 0; j < Board::BOARD_SIZE; j++) {
+            Board::BOARD_STATE state = pBoard->getState(i, j);
+            if (state == Board::BOARD_STATE::WHITE_CHESS ||
+                state == Board::BOARD_STATE::BLACK_CHESS) {
+                m_zobristHash.update(i, j, static_cast<Board::CHESS_COLOR>(state));
+            }
+        }
+    }
+
+    for (int i = 0; i < Board::BOARD_SIZE; ++i) {
+        for (int j = 0; j < Board::BOARD_SIZE; ++j) {
+            // only consider the points around the placed points
+            if (pBoard->getState(i, j) == Board::UNPLACE &&
+                pBoard->cntNeighbour(i, j) > 0) {
+                m_moveGenerator.addMove({i, j});
+                updateMoveAt(i, j, Board::CHESS_COLOR::BLACK);
+                updateMoveAt(i, j, Board::CHESS_COLOR::WHITE);
             }
         }
     }
 }
 
-void Agent::Update(int x, int y, int color) {
-    if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) {
+int Core::negMiniMaxSearch(int depth, Board::CHESS_COLOR player, int alpha, int beta) {
+    if (depth == 0) {
+        int val = evaluate();
+        m_TT.insert(m_zobristHash.getBoardHash(), depth, val, TT::EXACT, player);
+        return val;
+    }
+
+    if (m_timer.getTimePass() >= TIME_LIMIT) {
+        return Timer::TIME_OUT;
+    }
+
+    if (depth != iterativeDepth) {
+        int val = m_TT.find(m_zobristHash.getBoardHash(), depth, alpha, beta, player);
+        if (val != TT::TT_NOT_HIT) {
+            return val;
+        }
+    }
+
+    TT::Flag flag = TT::UPPER;
+
+    std::vector<MoveGenerator::Move> moves =
+        m_moveGenerator.generateMovesList(BRANCH_FACTOR);
+    int cntMoves = moves.size();
+    Board::CHESS_COLOR opponent = static_cast<Board::CHESS_COLOR>(player ^ 1);
+
+    bool opponentHasFive = false;
+    int i = 0;
+    while (i < cntMoves) {
+        // only consider the moves with score higher than FIVE
+        auto &move = moves[i];
+        int maxMoveScore = m_moveGenerator.maxMoveScore(move);
+        if (maxMoveScore < Scorer::TYPE_SCORES[Scorer::FIVE]) {
+            break;
+        }
+        int playerMoveScore = m_moveGenerator.playerMoveScore(move, player);
+        if (playerMoveScore >= Scorer::TYPE_SCORES[Scorer::FIVE]) {
+            // win
+            int val = INF + depth + KILL_DEPTH;
+
+            if (depth == iterativeDepth && val > m_bestScore) {
+                m_bestMove = move;
+                m_bestScore = val;
+            }
+            if (val >= beta) {
+                m_TT.insert(m_zobristHash.getBoardHash(), depth, beta, TT::LOWER, player);
+                return val;
+            }
+            if (val > alpha) {
+                flag = TT::EXACT;
+                alpha = val;
+            }
+            m_TT.insert(m_zobristHash.getBoardHash(), depth, alpha, flag, player);
+            return alpha;
+        } else {
+            opponentHasFive = true;
+        }
+        i++;
+    }
+
+    int val = alpha;
+
+    if (opponentHasFive) {
+        // must block the opponent's FIVE
+        i--;
+
+        auto &move = moves[i];
+
+        makeMove(move.x, move.y, player);
+        val = -negMiniMaxSearch(depth - 1, opponent, -beta, -alpha);
+        cancelMove(move.x, move.y);
+
+        if (val == -Timer::TIME_OUT) return Timer::TIME_OUT;
+
+        if (depth == iterativeDepth && val > m_bestScore) {
+            m_bestMove = move;
+            m_bestScore = val;
+        }
+        if (val >= beta) {
+            m_TT.insert(m_zobristHash.getBoardHash(), depth, beta, TT::LOWER, player);
+            return val;
+        }
+        if (val > alpha) {
+            flag = TT::EXACT;
+            alpha = val;
+        }
+    } else {
+        bool fFoundPv = false;
+        while (i < cntMoves) {
+            auto &move = moves[i];
+
+            makeMove(move.x, move.y, player);
+            if (fFoundPv) {
+                val = -negMiniMaxSearch(depth - 1, opponent, -alpha - 1, -alpha);
+                if ((val > alpha) && (val < beta)) {
+                    val = -negMiniMaxSearch(depth - 1, opponent, -beta, -alpha);
+                }
+            } else {
+                val = -negMiniMaxSearch(depth - 1, opponent, -beta, -alpha);
+            }
+            cancelMove(move.x, move.y);
+
+            if (val == -Timer::TIME_OUT) return Timer::TIME_OUT;
+
+            if (depth == iterativeDepth && val > m_bestScore) {
+                m_bestMove = move;
+                m_bestScore = val;
+            }
+            if (val >= beta) {
+                m_TT.insert(m_zobristHash.getBoardHash(), depth, beta, TT::LOWER, player);
+                return val;
+            }
+            if (val > alpha) {
+                flag = TT::EXACT;
+                fFoundPv = true;
+                alpha = val;
+            }
+
+            i++;
+        }
+    }
+
+    m_TT.insert(m_zobristHash.getBoardHash(), depth, alpha, flag, player);
+    return alpha;
+}
+
+int Core::run() {
+    if (!m_pBoard) return -1;
+
+    iterativeDepth = MIN_SEARCH_DEPTH + 1 - m_color;
+
+    if (ITERATIVE_DEEPENING) {
+        m_bestMove = {-1, -1};
+        int prevBestScore = -__INT32_MAX__;
+        MoveGenerator::Move prevBestMove = {-1, -1};
+        for (; iterativeDepth <= MAX_SEARCH_DEPTH + 1 - m_color; iterativeDepth += 2) {
+            m_bestScore = -__INT32_MAX__;
+            int val = negMiniMaxSearch(iterativeDepth, m_color,
+                                       -INF - iterativeDepth - KILL_DEPTH,
+                                       INF + iterativeDepth + KILL_DEPTH);
+            if (val == Timer::TIME_OUT) {
+                m_bestScore = prevBestScore;
+                m_bestMove = prevBestMove;
+                break;
+            } else if (val >= INF) {
+                break;
+            }
+            prevBestScore = m_bestScore;
+            prevBestMove = m_bestMove;
+        }
+    } else {
+        m_bestMove = {-1, -1};
+        m_bestScore = -__INT32_MAX__;
+        negMiniMaxSearch(iterativeDepth, m_color, -INF - iterativeDepth - KILL_DEPTH,
+                         INF + iterativeDepth + KILL_DEPTH);
+    }
+    return m_timer.getTimePass();
+}
+
+void Core::makeMove(int x, int y, Board::CHESS_COLOR player) {
+    if (m_pBoard->getState(x, y) != Board::BOARD_STATE::UNPLACE) {
         return;
     }
-    // 检查是否均为或均不为未放置
-    assert(!(weight[BLACK][x][y] == -1) ^ (weight[WHITE][x][y] == -1));
-    // 原始为未放置=>清除点在weight和nextPos中的记录
-    if (weight[BLACK][x][y] != -1 && weight[WHITE][x][y] != -1) {
-#ifndef ONLINE_JUDGE
-        assert(nextPos[MAX].count(Position{
-                   x, y, max(weight[WHITE][x][y], weight[BLACK][x][y])}) == 1);
-        // assert(nextPos[WHITE].count(Position{x, y, weight[WHITE][x][y]}) ==
-        // 1); assert(nextPos[BLACK].count(Position{x, y, weight[BLACK][x][y]})
-        // == 1);
-#endif
-        nextPos[MAX].erase(
-            Position{x, y, max(weight[WHITE][x][y], weight[BLACK][x][y])});
-        // nextPos[WHITE].erase(Position{x, y, weight[WHITE][x][y]});
-        // nextPos[BLACK].erase(Position{x, y, weight[BLACK][x][y]});
-        sumWeight[WHITE] -= weight[WHITE][x][y];
-        sumWeight[BLACK] -= weight[BLACK][x][y];
-        weight[BLACK][x][y] = weight[WHITE][x][y] = -1;
+    m_zobristHash.update(x, y, player);
+    m_pBoard->placeAt(x, y, player);
+    m_moveGenerator.eraseMove({x, y});
+    updateMoveAround(x, y, Board::CHESS_COLOR::BLACK);
+    updateMoveAround(x, y, Board::CHESS_COLOR::WHITE);
+}
+
+void Core::cancelMove(int x, int y) {
+    Board::BOARD_STATE preState = m_pBoard->getState(x, y);
+    if (preState == Board::BOARD_STATE::UNPLACE ||
+        preState == Board::BOARD_STATE::INVALID) {
+        return;
     }
-    myBoard.boardState[x][y] = color;
-    // 更改为未放置=>增加点在weight和nextPos中的记录
-    if (color == UNPLACE) {
-        weight[BLACK][x][y] = myBoard.MarkOfPoint(x, y, BLACK);
-        weight[WHITE][x][y] = myBoard.MarkOfPoint(x, y, WHITE);
-        sumWeight[WHITE] += weight[WHITE][x][y];
-        sumWeight[BLACK] += weight[BLACK][x][y];
-        nextPos[MAX].insert(
-            Position{x, y, max(weight[WHITE][x][y], weight[BLACK][x][y])});
-        // nextPos[WHITE].insert(Position{x, y, weight[WHITE][x][y]});
-        // nextPos[BLACK].insert(Position{x, y, weight[BLACK][x][y]});
+    m_zobristHash.update(x, y, static_cast<Board::CHESS_COLOR>(preState));
+    m_pBoard->unplaceAt(x, y);
+    m_moveGenerator.addMove({x, y});
+    updateMoveAt(x, y, Board::CHESS_COLOR::BLACK);
+    updateMoveAt(x, y, Board::CHESS_COLOR::WHITE);
+    updateMoveAround(x, y, Board::CHESS_COLOR::BLACK);
+    updateMoveAround(x, y, Board::CHESS_COLOR::WHITE);
+}
+
+void Core::updateMoveAt(int x, int y, int dir, Board::CHESS_COLOR player) {
+    int lx = x, ly = y, l = 0, cnt2 = 0;
+    while (l < 4) {
+        Board::BOARD_STATE state =
+            m_pBoard->getState(lx - Board::dr[dir], ly - Board::dc[dir]);
+        if (state == Board::BOARD_STATE::INVALID || state == (player ^ 1)) {
+            break;
+        }
+
+        l++;
+        lx -= Board::dr[dir];
+        ly -= Board::dc[dir];
+
+        if (state == Board::BOARD_STATE::UNPLACE) {
+            cnt2++;
+        } else {
+            cnt2 = 0;
+        }
+        if (cnt2 == 2) {
+            break;
+        }
     }
-    // 修改完成后, 在8*4范围内修改空闲点的权值
-    for (int dir = 0; dir < 8; dir++) {
-        int preState = INVALID;
-        for (int off = 1; off < 5; off++) {
-            int state = myBoard.RelativePosState(x, y, dir, off);
-            if (state == INVALID) break;
-            if (state == UNPLACE) {
-                int i = x + dr[dir] * off, j = y + dc[dir] * off;
-// 删除现存权值记录
-#ifndef ONLINE_JUDGE
-                assert(
-                    nextPos[MAX].count(Position{
-                        i, j, max(weight[WHITE][i][j], weight[BLACK][i][j])}) ==
-                    1);
-                // assert(nextPos[BLACK].count(
-                //            Position{i, j, weight[BLACK][i][j]}) == 1);
-                // assert(nextPos[WHITE].count(
-                //            Position{i, j, weight[WHITE][i][j]}) == 1);
-#endif
-                nextPos[MAX].erase(Position{
-                    i, j, max(weight[WHITE][i][j], weight[BLACK][i][j])});
-                // nextPos[WHITE].erase(Position{i, j, weight[WHITE][i][j]});
-                // nextPos[BLACK].erase(Position{i, j, weight[BLACK][i][j]});
-                sumWeight[WHITE] -= weight[WHITE][i][j];
-                sumWeight[BLACK] -= weight[BLACK][i][j];
-                // 求出新权值记录并保存
-                weight[BLACK][i][j] = myBoard.MarkOfPoint(i, j, BLACK);
-                weight[WHITE][i][j] = myBoard.MarkOfPoint(i, j, WHITE);
-                sumWeight[WHITE] += weight[WHITE][i][j];
-                sumWeight[BLACK] += weight[BLACK][i][j];
-                // 新增记录
-                nextPos[MAX].insert(Position{
-                    i, j, max(weight[WHITE][i][j], weight[BLACK][i][j])});
-                // nextPos[WHITE].insert(Position{i, j, weight[WHITE][i][j]});
-                // nextPos[BLACK].insert(Position{i, j, weight[BLACK][i][j]});
-                // break;
-                if (off > 1 && preState == UNPLACE) break;
-                preState = state;
-            } else if (preState == !state)
+
+    int lineState = 0;
+    for (int step = 1; step <= l; step++) {
+        lineState =
+            lineState * 3 + (m_pBoard->getState(lx, ly) == Board::UNPLACE ? 2 : 1);
+        lx += Board::dr[dir];
+        ly += Board::dc[dir];
+    }
+
+    lineState = lineState * 3 + 1;
+
+    int rx = x, ry = y, r = 0;
+    cnt2 = 0;
+    while (r < 4) {
+        Board::BOARD_STATE state =
+            m_pBoard->getState(rx + Board::dr[dir], ry + Board::dc[dir]);
+        if (state == Board::BOARD_STATE::INVALID || state == (player ^ 1)) {
+            break;
+        }
+
+        r++;
+        rx += Board::dr[dir];
+        ry += Board::dc[dir];
+
+        lineState = lineState * 3 + (state == Board::UNPLACE ? 2 : 1);
+
+        if (state == Board::BOARD_STATE::UNPLACE) {
+            cnt2++;
+        } else {
+            cnt2 = 0;
+        }
+        if (cnt2 == 2) {
+            break;
+        }
+    }
+
+    m_moveGenerator.updateMoveScoreByDir({x, y}, dir,
+                                         m_scorer.getScoreByLineState(lineState), player);
+}
+
+void Core::updateMoveAt(int x, int y, Board::CHESS_COLOR player) {
+    for (int dir = 0; dir < 4; dir++) {
+        int lx = x, ly = y, l = 0, cnt2 = 0;
+        while (l < 4) {
+            Board::BOARD_STATE state =
+                m_pBoard->getState(lx - Board::dr[dir], ly - Board::dc[dir]);
+            if (state == Board::BOARD_STATE::INVALID || state == (player ^ 1)) {
                 break;
+            }
+
+            l++;
+            lx -= Board::dr[dir];
+            ly -= Board::dc[dir];
+
+            if (state == Board::BOARD_STATE::UNPLACE) {
+                cnt2++;
+            } else {
+                cnt2 = 0;
+            }
+            if (cnt2 == 2) {
+                break;
+            }
+        }
+
+        int lineState = 0;
+        for (int step = 1; step <= l; step++) {
+            lineState =
+                lineState * 3 + (m_pBoard->getState(lx, ly) == Board::UNPLACE ? 2 : 1);
+            lx += Board::dr[dir];
+            ly += Board::dc[dir];
+        }
+
+        lineState = lineState * 3 + 1;
+
+        int rx = x, ry = y, r = 0;
+        cnt2 = 0;
+        while (r < 4) {
+            Board::BOARD_STATE state =
+                m_pBoard->getState(rx + Board::dr[dir], ry + Board::dc[dir]);
+            if (state == Board::BOARD_STATE::INVALID || state == (player ^ 1)) {
+                break;
+            }
+
+            r++;
+            rx += Board::dr[dir];
+            ry += Board::dc[dir];
+
+            lineState = lineState * 3 + (state == Board::UNPLACE ? 2 : 1);
+
+            if (state == Board::BOARD_STATE::UNPLACE) {
+                cnt2++;
+            } else {
+                cnt2 = 0;
+            }
+            if (cnt2 == 2) {
+                break;
+            }
+        }
+
+        m_moveGenerator.updateMoveScoreByDir(
+            {x, y}, dir, m_scorer.getScoreByLineState(lineState), player);
+    }
+}
+
+void Core::updateMoveAround(int x, int y, Board::CHESS_COLOR player) {
+    // TODO: use sliding window and only update score in current direction
+    for (int dir = 0; dir < 4; dir++) {
+        int tx = x, ty = y;
+        for (int i = 1; i <= 4; i++) {
+            tx += Board::dr[dir];
+            ty += Board::dc[dir];
+
+            int state = m_pBoard->getState(tx, ty);
+
+            if (state == Board::BOARD_STATE::INVALID || state == (player ^ 1)) {
+                break;
+            }
+
+            if (state == player) {
+                continue;
+            }
+
+            if (m_pBoard->cntNeighbour(tx, ty) == 0) {
+                if (m_moveGenerator.existsMove({tx, ty})) {
+                    m_moveGenerator.eraseMove({tx, ty});
+                }
+                if (i >= 2) break;
+            } else {
+                if (!m_moveGenerator.existsMove({tx, ty})) {
+                    m_moveGenerator.addMove({tx, ty});
+                }
+                updateMoveAt(tx, ty, dir, player);
+            }
+        }
+
+        tx = x, ty = y;
+        for (int i = 1; i <= 4; i++) {
+            tx -= Board::dr[dir];
+            ty -= Board::dc[dir];
+
+            int state = m_pBoard->getState(tx, ty);
+
+            if (state == Board::BOARD_STATE::INVALID || state == (player ^ 1)) {
+                break;
+            }
+
+            if (state == player) {
+                continue;
+            }
+
+            if (m_pBoard->cntNeighbour(tx, ty) == 0) {
+                if (m_moveGenerator.existsMove({tx, ty})) {
+                    m_moveGenerator.eraseMove({tx, ty});
+                }
+                if (i >= 2) break;
+            } else {
+                if (!m_moveGenerator.existsMove({tx, ty})) {
+                    m_moveGenerator.addMove({tx, ty});
+                }
+                updateMoveAt(tx, ty, dir, player);
+            }
         }
     }
 }
 
-LL Agent::Evaluate(int color) {
-    return sumWeight[color] * 2 - sumWeight[color ^ 1];
+int Core::evaluate() const {
+    return m_moveGenerator.sumPlayerScore(Board::CHESS_COLOR::BLACK) * 5 -
+           m_moveGenerator.sumPlayerScore(Board::CHESS_COLOR::WHITE);
 }
 
-#endif
+class Judger {
+   public:
+    enum MODE { ONLINE_JUDGE = 0, COMMAND_LINE = 1 };
+
+    Judger() {}
+    ~Judger();
+
+    static void setMode(MODE mode) { JUDGER_MODE = mode; }
+
+    void printCoreMoveByJSON();
+    void initGameByJSON();
+    void startGame();
+    bool checkFiveAt(int x, int y, Board::CHESS_COLOR);
+
+    static MODE JUDGER_MODE;
+
+   private:
+    Core *m_pCore = nullptr;
+    Board *m_pBoard = nullptr;
+};
+
+Judger::MODE Judger::JUDGER_MODE = Judger::MODE::COMMAND_LINE;
+
+Judger::~Judger() {
+    if (m_pBoard != nullptr) delete m_pBoard;
+    if (m_pCore != nullptr) delete m_pCore;
+}
+
+void Judger::initGameByJSON() {
+    std::string str;
+    getline(std::cin, str);
+    Json::Reader reader;
+    Json::Value input;
+    reader.parse(str, input);
+
+    Board::CHESS_COLOR coreColor = Board::CHESS_COLOR::WHITE;
+    if (input["requests"][0u]["x"].asInt() == -1 &&
+        input["requests"][0u]["y"].asInt() == -1) {
+        coreColor = Board::CHESS_COLOR::BLACK;
+    }
+    Board::CHESS_COLOR opponentColor = static_cast<Board::CHESS_COLOR>(coreColor ^ 1);
+
+    int turnID = input["responses"].size();
+
+    if (coreColor == Board::CHESS_COLOR::WHITE) {
+        for (int i = 0; i < turnID; i++) {
+            m_pBoard->placeAt(input["requests"][i]["x"].asInt(),
+                              input["requests"][i]["y"].asInt(), opponentColor);
+            m_pBoard->placeAt(input["responses"][i]["x"].asInt(),
+                              input["responses"][i]["y"].asInt(), coreColor);
+        }
+        m_pBoard->placeAt(input["requests"][turnID]["x"].asInt(),
+                          input["requests"][turnID]["y"].asInt(), opponentColor);
+    } else {
+        m_pBoard->placeAt(input["responses"][0u]["x"].asInt(),
+                          input["responses"][0u]["y"].asInt(), coreColor);
+        for (int i = 1; i < turnID; i++) {
+            m_pBoard->placeAt(input["requests"][i]["x"].asInt(),
+                              input["requests"][i]["y"].asInt(), opponentColor);
+            m_pBoard->placeAt(input["responses"][i]["x"].asInt(),
+                              input["responses"][i]["y"].asInt(), coreColor);
+        }
+        m_pBoard->placeAt(input["requests"][turnID]["x"].asInt(),
+                          input["requests"][turnID]["y"].asInt(), opponentColor);
+    }
+
+    m_pCore = new Core(m_pBoard);
+    m_pCore->setColor(coreColor);
+}
+
+void Judger::printCoreMoveByJSON() {
+    Json::Value ret;
+    MoveGenerator::Move best = m_pCore->bestMove();
+    ret["response"]["x"] = best.x;
+    ret["response"]["y"] = best.y;
+    Json::FastWriter writer;
+    std::cout << writer.write(ret) << std::endl;
+}
+
+void Judger::startGame() {
+    if (m_pBoard != nullptr) delete m_pBoard;
+    m_pBoard = new Board();
+    if (m_pCore != nullptr) delete m_pCore;
+
+    if (Judger::JUDGER_MODE == MODE::ONLINE_JUDGE) {
+        initGameByJSON();
+        m_pCore->run();
+        printCoreMoveByJSON();
+        return;
+    }
+}
 
 int main() {
-    ios::sync_with_stdio(false);
-    auto ai = new Agent;
-    ai->Run();
-    delete ai;
+    Judger judger;
+    Judger::JUDGER_MODE = Judger::MODE::ONLINE_JUDGE;
+    judger.startGame();
     return 0;
 }
