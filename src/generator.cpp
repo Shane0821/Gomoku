@@ -30,7 +30,7 @@ void MoveGenerator::sortMoves() {
 }
 
 void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, int w,
-                                         Board::CHESS_COLOR player) {
+                                         Board::PIECE_COLOR player) {
     m_sumPlayerScore[player] -= m_playerMoveScore[player][move.x][move.y];
 
     m_playerMoveScore[player][move.x][move.y] -= m_dirScore[player][dir][move.x][move.y];
@@ -70,27 +70,27 @@ void MoveGenerator::addMove(const Move &move) {
     int baseScore = Scorer::BASE_SCORES[move.x][move.y];
 
     for (int i = 0; i < 4; i++) {
-        m_dirScore[Board::CHESS_COLOR::BLACK][i][move.x][move.y] =
-            m_dirScore[Board::CHESS_COLOR::WHITE][i][move.x][move.y] = 0;
+        m_dirScore[Board::PIECE_COLOR::BLACK][i][move.x][move.y] =
+            m_dirScore[Board::PIECE_COLOR::WHITE][i][move.x][move.y] = 0;
     }
 
-    m_playerMoveScore[Board::CHESS_COLOR::BLACK][move.x][move.y] =
-        m_playerMoveScore[Board::CHESS_COLOR::WHITE][move.x][move.y] = baseScore;
+    m_playerMoveScore[Board::PIECE_COLOR::BLACK][move.x][move.y] =
+        m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y] = baseScore;
 
     m_maxScore[move.x][move.y] = baseScore;
 
-    m_cntKill[Board::CHESS_COLOR::BLACK][move.x][move.y] =
-        m_cntKill[Board::CHESS_COLOR::WHITE][move.x][move.y] = 0;
+    m_cntKill[Board::PIECE_COLOR::BLACK][move.x][move.y] =
+        m_cntKill[Board::PIECE_COLOR::WHITE][move.x][move.y] = 0;
 
-    m_sumPlayerScore[Board::CHESS_COLOR::BLACK] += baseScore;
-    m_sumPlayerScore[Board::CHESS_COLOR::WHITE] += baseScore;
+    m_sumPlayerScore[Board::PIECE_COLOR::BLACK] += baseScore;
+    m_sumPlayerScore[Board::PIECE_COLOR::WHITE] += baseScore;
 }
 
 void MoveGenerator::eraseMove(const Move &move) {
-    m_sumPlayerScore[Board::CHESS_COLOR::BLACK] -=
-        m_playerMoveScore[Board::CHESS_COLOR::BLACK][move.x][move.y];
-    m_sumPlayerScore[Board::CHESS_COLOR::WHITE] -=
-        m_playerMoveScore[Board::CHESS_COLOR::WHITE][move.x][move.y];
+    m_sumPlayerScore[Board::PIECE_COLOR::BLACK] -=
+        m_playerMoveScore[Board::PIECE_COLOR::BLACK][move.x][move.y];
+    m_sumPlayerScore[Board::PIECE_COLOR::WHITE] -=
+        m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y];
 
     m_maxScore[move.x][move.y] = INVALID_MOVE_WEIGHT;
 }
@@ -106,7 +106,7 @@ bool MoveGenerator::existsMove(const Move &move) {
     return m_maxScore[move.x][move.y] != INVALID_MOVE_WEIGHT;
 }
 
-int MoveGenerator::playerMoveScore(const Move &move, Board::CHESS_COLOR color) const {
+int MoveGenerator::playerMoveScore(const Move &move, Board::PIECE_COLOR color) const {
     return m_playerMoveScore[color][move.x][move.y];
 }
 
@@ -114,6 +114,6 @@ int MoveGenerator::maxMoveScore(const Move &move) const {
     return m_maxScore[move.x][move.y];
 }
 
-int MoveGenerator::sumPlayerScore(Board::CHESS_COLOR color) const {
+int MoveGenerator::sumPlayerScore(Board::PIECE_COLOR color) const {
     return m_sumPlayerScore[color];
 }

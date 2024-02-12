@@ -14,9 +14,9 @@ Core::Core(Board *pBoard) : m_pBoard(pBoard) {
     for (int i = 0; i < Board::BOARD_SIZE; i++) {
         for (int j = 0; j < Board::BOARD_SIZE; j++) {
             Board::BOARD_STATE state = pBoard->getState(i, j);
-            if (state == Board::BOARD_STATE::WHITE_CHESS ||
-                state == Board::BOARD_STATE::BLACK_CHESS) {
-                m_zobristHash.update(i, j, static_cast<Board::CHESS_COLOR>(state));
+            if (state == Board::BOARD_STATE::WHITE_PIECE ||
+                state == Board::BOARD_STATE::BLACK_PIECE) {
+                m_zobristHash.update(i, j, static_cast<Board::PIECE_COLOR>(state));
             }
         }
     }
@@ -27,14 +27,14 @@ Core::Core(Board *pBoard) : m_pBoard(pBoard) {
             if (pBoard->getState(i, j) == Board::UNPLACE &&
                 pBoard->cntNeighbour(i, j) > 0) {
                 m_moveGenerator.addMove({i, j});
-                updateMoveAt(i, j, Board::CHESS_COLOR::BLACK);
-                updateMoveAt(i, j, Board::CHESS_COLOR::WHITE);
+                updateMoveAt(i, j, Board::PIECE_COLOR::BLACK);
+                updateMoveAt(i, j, Board::PIECE_COLOR::WHITE);
             }
         }
     }
 }
 
-int Core::negMiniMaxSearch(int depth, Board::CHESS_COLOR player, int alpha, int beta) {
+int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int beta) {
     if (depth == 0) {
         int val = evaluate();
         m_TT.insert(m_zobristHash.getBoardHash(), depth, val, TT::EXACT, player);
@@ -57,7 +57,7 @@ int Core::negMiniMaxSearch(int depth, Board::CHESS_COLOR player, int alpha, int 
     std::vector<MoveGenerator::Move> moves =
         m_moveGenerator.generateMovesList(BRANCH_FACTOR);
     int cntMoves = moves.size();
-    Board::CHESS_COLOR opponent = static_cast<Board::CHESS_COLOR>(player ^ 1);
+    Board::PIECE_COLOR opponent = static_cast<Board::PIECE_COLOR>(player ^ 1);
 
     bool opponentHasFive = false;
     int i = 0;
@@ -194,15 +194,15 @@ int Core::run() {
     return m_timer.getTimePass();
 }
 
-void Core::makeMove(int x, int y, Board::CHESS_COLOR player) {
+void Core::makeMove(int x, int y, Board::PIECE_COLOR player) {
     if (m_pBoard->getState(x, y) != Board::BOARD_STATE::UNPLACE) {
         return;
     }
     m_zobristHash.update(x, y, player);
     m_pBoard->placeAt(x, y, player);
     m_moveGenerator.eraseMove({x, y});
-    updateMoveAround(x, y, Board::CHESS_COLOR::BLACK);
-    updateMoveAround(x, y, Board::CHESS_COLOR::WHITE);
+    updateMoveAround(x, y, Board::PIECE_COLOR::BLACK);
+    updateMoveAround(x, y, Board::PIECE_COLOR::WHITE);
 }
 
 void Core::cancelMove(int x, int y) {
@@ -211,16 +211,16 @@ void Core::cancelMove(int x, int y) {
         preState == Board::BOARD_STATE::INVALID) {
         return;
     }
-    m_zobristHash.update(x, y, static_cast<Board::CHESS_COLOR>(preState));
+    m_zobristHash.update(x, y, static_cast<Board::PIECE_COLOR>(preState));
     m_pBoard->unplaceAt(x, y);
     m_moveGenerator.addMove({x, y});
-    updateMoveAt(x, y, Board::CHESS_COLOR::BLACK);
-    updateMoveAt(x, y, Board::CHESS_COLOR::WHITE);
-    updateMoveAround(x, y, Board::CHESS_COLOR::BLACK);
-    updateMoveAround(x, y, Board::CHESS_COLOR::WHITE);
+    updateMoveAt(x, y, Board::PIECE_COLOR::BLACK);
+    updateMoveAt(x, y, Board::PIECE_COLOR::WHITE);
+    updateMoveAround(x, y, Board::PIECE_COLOR::BLACK);
+    updateMoveAround(x, y, Board::PIECE_COLOR::WHITE);
 }
 
-void Core::updateMoveAt(int x, int y, int dir, Board::CHESS_COLOR player) {
+void Core::updateMoveAt(int x, int y, int dir, Board::PIECE_COLOR player) {
     int lx = x, ly = y, l = 0, cnt2 = 0;
     while (l < 4) {
         Board::BOARD_STATE state =
@@ -282,7 +282,7 @@ void Core::updateMoveAt(int x, int y, int dir, Board::CHESS_COLOR player) {
                                          m_scorer.getScoreByLineState(lineState), player);
 }
 
-void Core::updateMoveAt(int x, int y, Board::CHESS_COLOR player) {
+void Core::updateMoveAt(int x, int y, Board::PIECE_COLOR player) {
     for (int dir = 0; dir < 4; dir++) {
         int lx = x, ly = y, l = 0, cnt2 = 0;
         while (l < 4) {
@@ -346,7 +346,7 @@ void Core::updateMoveAt(int x, int y, Board::CHESS_COLOR player) {
     }
 }
 
-void Core::updateMoveAround(int x, int y, Board::CHESS_COLOR player) {
+void Core::updateMoveAround(int x, int y, Board::PIECE_COLOR player) {
     // TODO: use sliding window and only update score in current direction
     for (int dir = 0; dir < 4; dir++) {
         int tx = x, ty = y;
@@ -408,6 +408,6 @@ void Core::updateMoveAround(int x, int y, Board::CHESS_COLOR player) {
 }
 
 int Core::evaluate() const {
-    return m_moveGenerator.sumPlayerScore(Board::CHESS_COLOR::BLACK) * 5 -
-           m_moveGenerator.sumPlayerScore(Board::CHESS_COLOR::WHITE);
+    return m_moveGenerator.sumPlayerScore(Board::PIECE_COLOR::BLACK) * 5 -
+           m_moveGenerator.sumPlayerScore(Board::PIECE_COLOR::WHITE);
 }

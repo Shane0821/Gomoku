@@ -19,9 +19,9 @@ class TT {
     ~TT();
 
     int find(unsigned long long hash, int depth, int alpha, int beta,
-             Board::CHESS_COLOR) const;
+             Board::PIECE_COLOR) const;
     void insert(unsigned long long hash, int depth, int value, Flag,
-                Board::CHESS_COLOR);
+                Board::PIECE_COLOR);
 
     const static int LENGTH = 1 << 20;
     const static int TT_NOT_HIT = __INT32_MAX__ - 1;

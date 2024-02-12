@@ -18,16 +18,16 @@ void Judger::initGameByJSON() {
     Json::Value input;
     reader.parse(str, input);
 
-    Board::CHESS_COLOR coreColor = Board::CHESS_COLOR::WHITE;
+    Board::PIECE_COLOR coreColor = Board::PIECE_COLOR::WHITE;
     if (input["requests"][0u]["x"].asInt() == -1 &&
         input["requests"][0u]["y"].asInt() == -1) {
-        coreColor = Board::CHESS_COLOR::BLACK;
+        coreColor = Board::PIECE_COLOR::BLACK;
     }
-    Board::CHESS_COLOR opponentColor = static_cast<Board::CHESS_COLOR>(coreColor ^ 1);
+    Board::PIECE_COLOR opponentColor = static_cast<Board::PIECE_COLOR>(coreColor ^ 1);
 
     int turnID = input["responses"].size();
 
-    if (coreColor == Board::CHESS_COLOR::WHITE) {
+    if (coreColor == Board::PIECE_COLOR::WHITE) {
         for (int i = 0; i < turnID; i++) {
             m_pBoard->placeAt(input["requests"][i]["x"].asInt(),
                               input["requests"][i]["y"].asInt(), opponentColor);
@@ -69,22 +69,22 @@ void Judger::startGame() {
 
     if (Judger::JUDGER_MODE == MODE::COMMAND_LINE) {
         int color = -1;
-        while (color != Board::CHESS_COLOR::WHITE && color != Board::CHESS_COLOR::BLACK) {
+        while (color != Board::PIECE_COLOR::WHITE && color != Board::PIECE_COLOR::BLACK) {
             std::cout << "Choose your color (white/black):\n";
             std::string input;
             std::cin >> input;
-            if (input == "white") color = Board::CHESS_COLOR::WHITE;
-            if (input == "black") color = Board::CHESS_COLOR::BLACK;
+            if (input == "white") color = Board::PIECE_COLOR::WHITE;
+            if (input == "black") color = Board::PIECE_COLOR::BLACK;
         }
 
-        Board::CHESS_COLOR playerColor = static_cast<Board::CHESS_COLOR>(color);
-        Board::CHESS_COLOR coreColor = static_cast<Board::CHESS_COLOR>(color ^ 1);
+        Board::PIECE_COLOR playerColor = static_cast<Board::PIECE_COLOR>(color);
+        Board::PIECE_COLOR coreColor = static_cast<Board::PIECE_COLOR>(color ^ 1);
 
         m_pCore = new Core(m_pBoard);
         m_pCore->setColor(coreColor);
 
         m_pBoard->display();
-        for (int i = 0, hand = Board::CHESS_COLOR::BLACK;
+        for (int i = 0, hand = Board::PIECE_COLOR::BLACK;
              i < Board::BOARD_SIZE * Board::BOARD_SIZE; i++, hand ^= 1) {
             if (hand == coreColor) {
                 int tm = m_pCore->run();
@@ -136,7 +136,7 @@ void Judger::startGame() {
     }
 }
 
-bool Judger::checkFiveAt(int x, int y, Board::CHESS_COLOR color) {
+bool Judger::checkFiveAt(int x, int y, Board::PIECE_COLOR color) {
     if (m_pBoard->getState(x, y) != color) return false;
 
     for (int k = 0; k < 4; k++) {

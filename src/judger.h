@@ -15,7 +15,7 @@ class Judger {
     void printCoreMoveByJSON();
     void initGameByJSON();
     void startGame();
-    bool checkFiveAt(int x, int y, Board::CHESS_COLOR);
+    bool checkFiveAt(int x, int y, Board::PIECE_COLOR);
 
     static MODE JUDGER_MODE;
 

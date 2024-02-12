@@ -9,7 +9,7 @@ class Zobrist {
 
     static unsigned long long generateRandomNumber();
 
-    void update(int x, int y, Board::CHESS_COLOR);
+    void update(int x, int y, Board::PIECE_COLOR);
 
     unsigned long long getBoardHash() { return m_boardHash; }
 

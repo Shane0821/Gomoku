@@ -17,14 +17,14 @@ class MoveGenerator {
     MoveGenerator();
 
     void sortMoves();
-    void updateMoveScoreByDir(const Move &move, int dir, int w, Board::CHESS_COLOR);
+    void updateMoveScoreByDir(const Move &move, int dir, int w, Board::PIECE_COLOR);
     void addMove(const Move &move);
     void eraseMove(const Move &move);
     bool existsMove(const Move &move);
     std::vector<Move> generateMovesList(int cnt);
-    int playerMoveScore(const Move &move, Board::CHESS_COLOR color) const;
+    int playerMoveScore(const Move &move, Board::PIECE_COLOR color) const;
     int maxMoveScore(const Move &move) const;
-    int sumPlayerScore(Board::CHESS_COLOR color) const;
+    int sumPlayerScore(Board::PIECE_COLOR color) const;
 
     const static int INVALID_MOVE_WEIGHT = -__INT32_MAX__;
 

@@ -15,22 +15,22 @@
 
 class Board {
    public:
-    enum CHESS_COLOR {
+    enum PIECE_COLOR {
         WHITE = 0,
         BLACK = 1,
     };
 
     enum BOARD_STATE {
         INVALID = -1,
-        WHITE_CHESS = CHESS_COLOR::WHITE,
-        BLACK_CHESS = CHESS_COLOR::BLACK,
+        WHITE_PIECE = PIECE_COLOR::WHITE,
+        BLACK_PIECE = PIECE_COLOR::BLACK,
         UNPLACE = 2
     };
 
     Board();
 
     /** Update state at (x, y) */
-    void placeAt(int x, int y, CHESS_COLOR color);
+    void placeAt(int x, int y, PIECE_COLOR color);
 
     void unplaceAt(int x, int y);
 
@@ -71,7 +71,7 @@ Board::BOARD_STATE Board::getState(int x, int y) const {
     return m_boardState[x][y];
 }
 
-void Board::placeAt(int x, int y, Board::CHESS_COLOR color) {
+void Board::placeAt(int x, int y, Board::PIECE_COLOR color) {
     m_boardState[x][y] = static_cast<BOARD_STATE>(color);
 
     for (int k = 0; k < 4; k++) {
@@ -440,14 +440,14 @@ class MoveGenerator {
     MoveGenerator();
 
     void sortMoves();
-    void updateMoveScoreByDir(const Move &move, int dir, int w, Board::CHESS_COLOR);
+    void updateMoveScoreByDir(const Move &move, int dir, int w, Board::PIECE_COLOR);
     void addMove(const Move &move);
     void eraseMove(const Move &move);
     bool existsMove(const Move &move);
     std::vector<Move> generateMovesList(int cnt);
-    int playerMoveScore(const Move &move, Board::CHESS_COLOR color) const;
+    int playerMoveScore(const Move &move, Board::PIECE_COLOR color) const;
     int maxMoveScore(const Move &move) const;
-    int sumPlayerScore(Board::CHESS_COLOR color) const;
+    int sumPlayerScore(Board::PIECE_COLOR color) const;
 
     const static int INVALID_MOVE_WEIGHT = -__INT32_MAX__;
 
@@ -485,7 +485,7 @@ void MoveGenerator::sortMoves() {
 }
 
 void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, int w,
-                                         Board::CHESS_COLOR player) {
+                                         Board::PIECE_COLOR player) {
     m_sumPlayerScore[player] -= m_playerMoveScore[player][move.x][move.y];
 
     m_playerMoveScore[player][move.x][move.y] -= m_dirScore[player][dir][move.x][move.y];
@@ -525,27 +525,27 @@ void MoveGenerator::addMove(const Move &move) {
     int baseScore = Scorer::BASE_SCORES[move.x][move.y];
 
     for (int i = 0; i < 4; i++) {
-        m_dirScore[Board::CHESS_COLOR::BLACK][i][move.x][move.y] =
-            m_dirScore[Board::CHESS_COLOR::WHITE][i][move.x][move.y] = 0;
+        m_dirScore[Board::PIECE_COLOR::BLACK][i][move.x][move.y] =
+            m_dirScore[Board::PIECE_COLOR::WHITE][i][move.x][move.y] = 0;
     }
 
-    m_playerMoveScore[Board::CHESS_COLOR::BLACK][move.x][move.y] =
-        m_playerMoveScore[Board::CHESS_COLOR::WHITE][move.x][move.y] = baseScore;
+    m_playerMoveScore[Board::PIECE_COLOR::BLACK][move.x][move.y] =
+        m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y] = baseScore;
 
     m_maxScore[move.x][move.y] = baseScore;
 
-    m_cntKill[Board::CHESS_COLOR::BLACK][move.x][move.y] =
-        m_cntKill[Board::CHESS_COLOR::WHITE][move.x][move.y] = 0;
+    m_cntKill[Board::PIECE_COLOR::BLACK][move.x][move.y] =
+        m_cntKill[Board::PIECE_COLOR::WHITE][move.x][move.y] = 0;
 
-    m_sumPlayerScore[Board::CHESS_COLOR::BLACK] += baseScore;
-    m_sumPlayerScore[Board::CHESS_COLOR::WHITE] += baseScore;
+    m_sumPlayerScore[Board::PIECE_COLOR::BLACK] += baseScore;
+    m_sumPlayerScore[Board::PIECE_COLOR::WHITE] += baseScore;
 }
 
 void MoveGenerator::eraseMove(const Move &move) {
-    m_sumPlayerScore[Board::CHESS_COLOR::BLACK] -=
-        m_playerMoveScore[Board::CHESS_COLOR::BLACK][move.x][move.y];
-    m_sumPlayerScore[Board::CHESS_COLOR::WHITE] -=
-        m_playerMoveScore[Board::CHESS_COLOR::WHITE][move.x][move.y];
+    m_sumPlayerScore[Board::PIECE_COLOR::BLACK] -=
+        m_playerMoveScore[Board::PIECE_COLOR::BLACK][move.x][move.y];
+    m_sumPlayerScore[Board::PIECE_COLOR::WHITE] -=
+        m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y];
 
     m_maxScore[move.x][move.y] = INVALID_MOVE_WEIGHT;
 }
@@ -561,7 +561,7 @@ bool MoveGenerator::existsMove(const Move &move) {
     return m_maxScore[move.x][move.y] != INVALID_MOVE_WEIGHT;
 }
 
-int MoveGenerator::playerMoveScore(const Move &move, Board::CHESS_COLOR color) const {
+int MoveGenerator::playerMoveScore(const Move &move, Board::PIECE_COLOR color) const {
     return m_playerMoveScore[color][move.x][move.y];
 }
 
@@ -569,7 +569,7 @@ int MoveGenerator::maxMoveScore(const Move &move) const {
     return m_maxScore[move.x][move.y];
 }
 
-int MoveGenerator::sumPlayerScore(Board::CHESS_COLOR color) const {
+int MoveGenerator::sumPlayerScore(Board::PIECE_COLOR color) const {
     return m_sumPlayerScore[color];
 }
 
@@ -579,7 +579,7 @@ class Zobrist {
 
     static unsigned long long generateRandomNumber();
 
-    unsigned long long update(int x, int y, Board::CHESS_COLOR);
+    unsigned long long update(int x, int y, Board::PIECE_COLOR);
 
     unsigned long long getBoardHash() { return m_boardHash; }
 
@@ -605,7 +605,7 @@ unsigned long long Zobrist::generateRandomNumber() {
     return dist(mt);
 }
 
-unsigned long long Zobrist::update(int x, int y, Board::CHESS_COLOR color) {
+unsigned long long Zobrist::update(int x, int y, Board::PIECE_COLOR color) {
     m_boardHash ^= m_hashTable[color][x][y];
     return m_boardHash;
 }
@@ -625,8 +625,8 @@ class TT {
     ~TT();
 
     int find(unsigned long long hash, int depth, int alpha, int beta,
-             Board::CHESS_COLOR) const;
-    void insert(unsigned long long hash, int depth, int value, Flag, Board::CHESS_COLOR);
+             Board::PIECE_COLOR) const;
+    void insert(unsigned long long hash, int depth, int value, Flag, Board::PIECE_COLOR);
 
     const static int LENGTH = 1 << 20;
     const static int TT_NOT_HIT = __INT32_MAX__ - 1;
@@ -648,7 +648,7 @@ TT::~TT() {
 }
 
 int TT::find(unsigned long long hash, int depth, int alpha, int beta,
-             Board::CHESS_COLOR color) const {
+             Board::PIECE_COLOR color) const {
     int idx = getHashIndex(hash);
 
     Item &item = m_pTable[color][idx];
@@ -674,7 +674,7 @@ int TT::find(unsigned long long hash, int depth, int alpha, int beta,
 }
 
 void TT::insert(unsigned long long hash, int depth, int value, Flag flag,
-                Board::CHESS_COLOR color) {
+                Board::PIECE_COLOR color) {
     int idx = getHashIndex(hash);
 
     Item &item = m_pTable[color][idx];
@@ -706,11 +706,11 @@ class Core {
     Core(Board *pBoard);
     ~Core() {}
 
-    void setColor(Board::CHESS_COLOR color) { m_color = color; }
+    void setColor(Board::PIECE_COLOR color) { m_color = color; }
     MoveGenerator::Move bestMove() const { return m_bestMove; }
     int bestScore() const { return m_bestScore; }
     int run();
-    void makeMove(int x, int y, Board::CHESS_COLOR);
+    void makeMove(int x, int y, Board::PIECE_COLOR);
     void cancelMove(int x, int y);
 
     static int MIN_SEARCH_DEPTH;
@@ -722,10 +722,10 @@ class Core {
     const static int TIME_LIMIT = 980;
 
    private:
-    int negMiniMaxSearch(int depth, Board::CHESS_COLOR player, int alpha, int beta);
-    void updateMoveAt(int x, int y, Board::CHESS_COLOR);
-    void updateMoveAt(int x, int y, int dir, Board::CHESS_COLOR);
-    void updateMoveAround(int x, int y, Board::CHESS_COLOR);
+    int negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int beta);
+    void updateMoveAt(int x, int y, Board::PIECE_COLOR);
+    void updateMoveAt(int x, int y, int dir, Board::PIECE_COLOR);
+    void updateMoveAround(int x, int y, Board::PIECE_COLOR);
 
     int evaluate() const;
 
@@ -737,7 +737,7 @@ class Core {
     MoveGenerator m_moveGenerator;
     Scorer m_scorer;
 
-    Board::CHESS_COLOR m_color = Board::CHESS_COLOR::WHITE;
+    Board::PIECE_COLOR m_color = Board::PIECE_COLOR::WHITE;
 
     MoveGenerator::Move m_bestMove;
     int m_bestScore = -__INT32_MAX__;
@@ -755,9 +755,9 @@ Core::Core(Board *pBoard) : m_pBoard(pBoard) {
     for (int i = 0; i < Board::BOARD_SIZE; i++) {
         for (int j = 0; j < Board::BOARD_SIZE; j++) {
             Board::BOARD_STATE state = pBoard->getState(i, j);
-            if (state == Board::BOARD_STATE::WHITE_CHESS ||
-                state == Board::BOARD_STATE::BLACK_CHESS) {
-                m_zobristHash.update(i, j, static_cast<Board::CHESS_COLOR>(state));
+            if (state == Board::BOARD_STATE::WHITE_PIECE ||
+                state == Board::BOARD_STATE::BLACK_PIECE) {
+                m_zobristHash.update(i, j, static_cast<Board::PIECE_COLOR>(state));
             }
         }
     }
@@ -768,14 +768,14 @@ Core::Core(Board *pBoard) : m_pBoard(pBoard) {
             if (pBoard->getState(i, j) == Board::UNPLACE &&
                 pBoard->cntNeighbour(i, j) > 0) {
                 m_moveGenerator.addMove({i, j});
-                updateMoveAt(i, j, Board::CHESS_COLOR::BLACK);
-                updateMoveAt(i, j, Board::CHESS_COLOR::WHITE);
+                updateMoveAt(i, j, Board::PIECE_COLOR::BLACK);
+                updateMoveAt(i, j, Board::PIECE_COLOR::WHITE);
             }
         }
     }
 }
 
-int Core::negMiniMaxSearch(int depth, Board::CHESS_COLOR player, int alpha, int beta) {
+int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int beta) {
     if (depth == 0) {
         int val = evaluate();
         m_TT.insert(m_zobristHash.getBoardHash(), depth, val, TT::EXACT, player);
@@ -798,7 +798,7 @@ int Core::negMiniMaxSearch(int depth, Board::CHESS_COLOR player, int alpha, int 
     std::vector<MoveGenerator::Move> moves =
         m_moveGenerator.generateMovesList(BRANCH_FACTOR);
     int cntMoves = moves.size();
-    Board::CHESS_COLOR opponent = static_cast<Board::CHESS_COLOR>(player ^ 1);
+    Board::PIECE_COLOR opponent = static_cast<Board::PIECE_COLOR>(player ^ 1);
 
     bool opponentHasFive = false;
     int i = 0;
@@ -933,15 +933,15 @@ int Core::run() {
     return m_timer.getTimePass();
 }
 
-void Core::makeMove(int x, int y, Board::CHESS_COLOR player) {
+void Core::makeMove(int x, int y, Board::PIECE_COLOR player) {
     if (m_pBoard->getState(x, y) != Board::BOARD_STATE::UNPLACE) {
         return;
     }
     m_zobristHash.update(x, y, player);
     m_pBoard->placeAt(x, y, player);
     m_moveGenerator.eraseMove({x, y});
-    updateMoveAround(x, y, Board::CHESS_COLOR::BLACK);
-    updateMoveAround(x, y, Board::CHESS_COLOR::WHITE);
+    updateMoveAround(x, y, Board::PIECE_COLOR::BLACK);
+    updateMoveAround(x, y, Board::PIECE_COLOR::WHITE);
 }
 
 void Core::cancelMove(int x, int y) {
@@ -950,16 +950,16 @@ void Core::cancelMove(int x, int y) {
         preState == Board::BOARD_STATE::INVALID) {
         return;
     }
-    m_zobristHash.update(x, y, static_cast<Board::CHESS_COLOR>(preState));
+    m_zobristHash.update(x, y, static_cast<Board::PIECE_COLOR>(preState));
     m_pBoard->unplaceAt(x, y);
     m_moveGenerator.addMove({x, y});
-    updateMoveAt(x, y, Board::CHESS_COLOR::BLACK);
-    updateMoveAt(x, y, Board::CHESS_COLOR::WHITE);
-    updateMoveAround(x, y, Board::CHESS_COLOR::BLACK);
-    updateMoveAround(x, y, Board::CHESS_COLOR::WHITE);
+    updateMoveAt(x, y, Board::PIECE_COLOR::BLACK);
+    updateMoveAt(x, y, Board::PIECE_COLOR::WHITE);
+    updateMoveAround(x, y, Board::PIECE_COLOR::BLACK);
+    updateMoveAround(x, y, Board::PIECE_COLOR::WHITE);
 }
 
-void Core::updateMoveAt(int x, int y, int dir, Board::CHESS_COLOR player) {
+void Core::updateMoveAt(int x, int y, int dir, Board::PIECE_COLOR player) {
     int lx = x, ly = y, l = 0, cnt2 = 0;
     while (l < 4) {
         Board::BOARD_STATE state =
@@ -1021,7 +1021,7 @@ void Core::updateMoveAt(int x, int y, int dir, Board::CHESS_COLOR player) {
                                          m_scorer.getScoreByLineState(lineState), player);
 }
 
-void Core::updateMoveAt(int x, int y, Board::CHESS_COLOR player) {
+void Core::updateMoveAt(int x, int y, Board::PIECE_COLOR player) {
     for (int dir = 0; dir < 4; dir++) {
         int lx = x, ly = y, l = 0, cnt2 = 0;
         while (l < 4) {
@@ -1085,7 +1085,7 @@ void Core::updateMoveAt(int x, int y, Board::CHESS_COLOR player) {
     }
 }
 
-void Core::updateMoveAround(int x, int y, Board::CHESS_COLOR player) {
+void Core::updateMoveAround(int x, int y, Board::PIECE_COLOR player) {
     // TODO: use sliding window and only update score in current direction
     for (int dir = 0; dir < 4; dir++) {
         int tx = x, ty = y;
@@ -1147,8 +1147,8 @@ void Core::updateMoveAround(int x, int y, Board::CHESS_COLOR player) {
 }
 
 int Core::evaluate() const {
-    return m_moveGenerator.sumPlayerScore(Board::CHESS_COLOR::BLACK) * 6 -
-           m_moveGenerator.sumPlayerScore(Board::CHESS_COLOR::WHITE);
+    return m_moveGenerator.sumPlayerScore(Board::PIECE_COLOR::BLACK) * 6 -
+           m_moveGenerator.sumPlayerScore(Board::PIECE_COLOR::WHITE);
 }
 
 class Judger {
@@ -1163,7 +1163,7 @@ class Judger {
     void printCoreMoveByJSON();
     void initGameByJSON();
     void startGame();
-    bool checkFiveAt(int x, int y, Board::CHESS_COLOR);
+    bool checkFiveAt(int x, int y, Board::PIECE_COLOR);
 
     static MODE JUDGER_MODE;
 
@@ -1186,16 +1186,16 @@ void Judger::initGameByJSON() {
     Json::Value input;
     reader.parse(str, input);
 
-    Board::CHESS_COLOR coreColor = Board::CHESS_COLOR::WHITE;
+    Board::PIECE_COLOR coreColor = Board::PIECE_COLOR::WHITE;
     if (input["requests"][0u]["x"].asInt() == -1 &&
         input["requests"][0u]["y"].asInt() == -1) {
-        coreColor = Board::CHESS_COLOR::BLACK;
+        coreColor = Board::PIECE_COLOR::BLACK;
     }
-    Board::CHESS_COLOR opponentColor = static_cast<Board::CHESS_COLOR>(coreColor ^ 1);
+    Board::PIECE_COLOR opponentColor = static_cast<Board::PIECE_COLOR>(coreColor ^ 1);
 
     int turnID = input["responses"].size();
 
-    if (coreColor == Board::CHESS_COLOR::WHITE) {
+    if (coreColor == Board::PIECE_COLOR::WHITE) {
         for (int i = 0; i < turnID; i++) {
             m_pBoard->placeAt(input["requests"][i]["x"].asInt(),
                               input["requests"][i]["y"].asInt(), opponentColor);

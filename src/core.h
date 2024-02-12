@@ -13,11 +13,11 @@ class Core {
     Core(Board *pBoard);
     ~Core() {}
 
-    void setColor(Board::CHESS_COLOR color) { m_color = color; }
+    void setColor(Board::PIECE_COLOR color) { m_color = color; }
     MoveGenerator::Move bestMove() const { return m_bestMove; }
     int bestScore() const { return m_bestScore; }
     int run();
-    void makeMove(int x, int y, Board::CHESS_COLOR);
+    void makeMove(int x, int y, Board::PIECE_COLOR);
     void cancelMove(int x, int y);
 
     static int MIN_SEARCH_DEPTH;
@@ -29,10 +29,10 @@ class Core {
     const static int TIME_LIMIT = 980;
 
    private:
-    int negMiniMaxSearch(int depth, Board::CHESS_COLOR player, int alpha, int beta);
-    void updateMoveAt(int x, int y, Board::CHESS_COLOR);
-    void updateMoveAt(int x, int y, int dir, Board::CHESS_COLOR);
-    void updateMoveAround(int x, int y, Board::CHESS_COLOR);
+    int negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int beta);
+    void updateMoveAt(int x, int y, Board::PIECE_COLOR);
+    void updateMoveAt(int x, int y, int dir, Board::PIECE_COLOR);
+    void updateMoveAround(int x, int y, Board::PIECE_COLOR);
 
     int evaluate() const;
 
@@ -44,7 +44,7 @@ class Core {
     MoveGenerator m_moveGenerator;
     Scorer m_scorer;
 
-    Board::CHESS_COLOR m_color = Board::CHESS_COLOR::WHITE;
+    Board::PIECE_COLOR m_color = Board::PIECE_COLOR::WHITE;
 
     MoveGenerator::Move m_bestMove;
     int m_bestScore = -__INT32_MAX__;

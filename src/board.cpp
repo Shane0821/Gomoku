@@ -42,7 +42,7 @@ void Board::display() const {
     }
 }
 
-void Board::placeAt(int x, int y, Board::CHESS_COLOR color) {
+void Board::placeAt(int x, int y, Board::PIECE_COLOR color) {
     m_boardState[x][y] = static_cast<BOARD_STATE>(color);
 
     for (int k = 0; k < 4; k++) {

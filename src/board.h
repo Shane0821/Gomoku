@@ -3,15 +3,15 @@
 
 class Board {
    public:
-    enum CHESS_COLOR {
+    enum PIECE_COLOR {
         WHITE = 0,
         BLACK = 1,
     };
 
     enum BOARD_STATE {
         INVALID = -1,
-        WHITE_CHESS = CHESS_COLOR::WHITE,
-        BLACK_CHESS = CHESS_COLOR::BLACK,
+        WHITE_PIECE = PIECE_COLOR::WHITE,
+        BLACK_PIECE = PIECE_COLOR::BLACK,
         UNPLACE = 2
     };
 
@@ -21,7 +21,7 @@ class Board {
     void display() const;
 
     /** Update state at (x, y) */
-    void placeAt(int x, int y, CHESS_COLOR color);
+    void placeAt(int x, int y, PIECE_COLOR color);
 
     void unplaceAt(int x, int y);
 

@@ -20,6 +20,6 @@ unsigned long long Zobrist::generateRandomNumber() {
     return dist(mt);
 }
 
-void Zobrist::update(int x, int y, Board::CHESS_COLOR color) {
+void Zobrist::update(int x, int y, Board::PIECE_COLOR color) {
     m_boardHash ^= m_hashTable[color][x][y];
 }

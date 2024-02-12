@@ -11,7 +11,7 @@ TT::~TT() {
 }
 
 int TT::find(unsigned long long hash, int depth, int alpha, int beta,
-             Board::CHESS_COLOR color) const {
+             Board::PIECE_COLOR color) const {
     int idx = getHashIndex(hash);
 
     Item &item = m_pTable[color][idx];
@@ -37,7 +37,7 @@ int TT::find(unsigned long long hash, int depth, int alpha, int beta,
 }
 
 void TT::insert(unsigned long long hash, int depth, int value, Flag flag,
-                Board::CHESS_COLOR color) {
+                Board::PIECE_COLOR color) {
     int idx = getHashIndex(hash);
 
     Item &item = m_pTable[color][idx];
