@@ -719,7 +719,7 @@ class Core {
     static bool ITERATIVE_DEEPENING;
     static int BRANCH_FACTOR;
     const static int INF = __INT32_MAX__ - 100;
-    const static int TIME_LIMIT = 988;
+    const static int TIME_LIMIT = 980;
 
    private:
     int negMiniMaxSearch(int depth, Board::CHESS_COLOR player, int alpha, int beta);
