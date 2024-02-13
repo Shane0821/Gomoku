@@ -100,7 +100,7 @@ void dfs(string s, int cont2, int cont1, int cnt1) {
         return;
     }
     dfs(s + "0", 0, 0, cnt1);
-    if (cont1 < 5) dfs(s + "1", 0, cont1 + 1, cnt1 + 1);
+    dfs(s + "1", 0, cont1 + 1, cnt1 + 1);
     if (cont2 < 2) dfs(s + "2", cont2 + 1, 0, cnt1);
 }
 
