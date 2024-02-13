@@ -146,8 +146,8 @@ class Scorer {
     Type *m_pTypeTable;
 };
 
-const int Scorer::TYPE_SCORES[CNT_TYPES] = {999999, 100000, 10000, 1000, 1200,
-                                            100,    120,    10,    0};
+const int Scorer::TYPE_SCORES[CNT_TYPES] = {999999, 100000, 10000, 1000, 1000,
+                                            100,    100,    10,    0};
 
 const int Scorer::BASE_SCORES[Board::BOARD_SIZE][Board::BOARD_SIZE] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
