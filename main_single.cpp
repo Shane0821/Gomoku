@@ -169,6 +169,35 @@ const int Scorer::BASE_SCORES[Board::BOARD_SIZE][Board::BOARD_SIZE] = {
 Scorer::Scorer() {
     m_pTypeTable = new Type[CNT_STATES];
     for (int i = 0; i < CNT_STATES; i++) m_pTypeTable[i] = BASE;
+    m_pTypeTable[364] = FIVE;
+    m_pTypeTable[1093] = FIVE;
+    m_pTypeTable[1094] = FIVE;
+    m_pTypeTable[1822] = FIVE;
+    m_pTypeTable[3280] = FIVE;
+    m_pTypeTable[3281] = FIVE;
+    m_pTypeTable[3283] = FIVE;
+    m_pTypeTable[3284] = FIVE;
+    m_pTypeTable[4009] = FIVE;
+    m_pTypeTable[5467] = FIVE;
+    m_pTypeTable[5468] = FIVE;
+    m_pTypeTable[6196] = FIVE;
+    m_pTypeTable[9841] = FIVE;
+    m_pTypeTable[9842] = FIVE;
+    m_pTypeTable[9844] = FIVE;
+    m_pTypeTable[9845] = FIVE;
+    m_pTypeTable[9850] = FIVE;
+    m_pTypeTable[9851] = FIVE;
+    m_pTypeTable[10570] = FIVE;
+    m_pTypeTable[12028] = FIVE;
+    m_pTypeTable[12029] = FIVE;
+    m_pTypeTable[16402] = FIVE;
+    m_pTypeTable[16403] = FIVE;
+    m_pTypeTable[16405] = FIVE;
+    m_pTypeTable[16406] = FIVE;
+    m_pTypeTable[17131] = FIVE;
+    m_pTypeTable[18589] = FIVE;
+    m_pTypeTable[18590] = FIVE;
+
     m_pTypeTable[121] = FIVE;
     m_pTypeTable[122] = SLEEP_FOUR;
     m_pTypeTable[124] = SLEEP_FOUR;
