@@ -894,18 +894,22 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
         while (i < cntMoves) {
             auto &move = moves[i];
 
-            makeMove(move.x, move.y, player);
-            if (fFoundPv) {
-                val = -negMiniMaxSearch(depth - 1, opponent, -alpha - 1, -alpha);
-                if ((val > alpha) && (val < beta)) {
+            if (m_moveGenerator.playerMoveScore(move, player) >=
+                Scorer::TYPE_SCORES[Scorer::LIVE_FOUR]) {
+                val = INF + depth + KILL_DEPTH - 1;
+            } else {
+                makeMove(move.x, move.y, player);
+                if (fFoundPv) {
+                    val = -negMiniMaxSearch(depth - 1, opponent, -alpha - 1, -alpha);
+                    if ((val > alpha) && (val < beta)) {
+                        val = -negMiniMaxSearch(depth - 1, opponent, -beta, -alpha);
+                    }
+                } else {
                     val = -negMiniMaxSearch(depth - 1, opponent, -beta, -alpha);
                 }
-            } else {
-                val = -negMiniMaxSearch(depth - 1, opponent, -beta, -alpha);
+                cancelMove(move.x, move.y);
+                if (val == -Timer::TIME_OUT) return Timer::TIME_OUT;
             }
-            cancelMove(move.x, move.y);
-
-            if (val == -Timer::TIME_OUT) return Timer::TIME_OUT;
 
             if (depth == iterativeDepth && val > m_bestScore) {
                 m_bestMove = move;
