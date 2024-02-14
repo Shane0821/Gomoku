@@ -40,7 +40,6 @@ class Core {
 
     Timer m_timer;
     TT m_TT;
-    Zobrist m_zobristHash;
     MoveGenerator m_moveGenerator;
     Scorer m_scorer;
 

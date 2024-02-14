@@ -11,15 +11,6 @@ int Core::KILL_DEPTH = 4;
 
 Core::Core(Board *pBoard) : m_pBoard(pBoard) {
     if (!pBoard) return;
-    for (int i = 0; i < Board::BOARD_SIZE; i++) {
-        for (int j = 0; j < Board::BOARD_SIZE; j++) {
-            Board::BOARD_STATE state = pBoard->getState(i, j);
-            if (state == Board::BOARD_STATE::WHITE_PIECE ||
-                state == Board::BOARD_STATE::BLACK_PIECE) {
-                m_zobristHash.update(i, j, static_cast<Board::PIECE_COLOR>(state));
-            }
-        }
-    }
 
     for (int i = 0; i < Board::BOARD_SIZE; ++i) {
         for (int j = 0; j < Board::BOARD_SIZE; ++j) {
@@ -37,7 +28,7 @@ Core::Core(Board *pBoard) : m_pBoard(pBoard) {
 int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int beta) {
     if (depth == 0) {
         int val = evaluate();
-        m_TT.insert(m_zobristHash.getBoardHash(), depth, val, TT::EXACT, player);
+        m_TT.insert(m_pBoard->getBoardHash(), depth, val, TT::EXACT, player);
         return val;
     }
 
@@ -46,7 +37,7 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
     }
 
     if (depth != iterativeDepth) {
-        int val = m_TT.find(m_zobristHash.getBoardHash(), depth, alpha, beta, player);
+        int val = m_TT.find(m_pBoard->getBoardHash(), depth, alpha, beta, player);
         if (val != TT::TT_NOT_HIT) {
             return val;
         }
@@ -78,14 +69,14 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
                 m_bestScore = val;
             }
             if (val >= beta) {
-                m_TT.insert(m_zobristHash.getBoardHash(), depth, beta, TT::LOWER, player);
+                m_TT.insert(m_pBoard->getBoardHash(), depth, beta, TT::LOWER, player);
                 return val;
             }
             if (val > alpha) {
                 flag = TT::EXACT;
                 alpha = val;
             }
-            m_TT.insert(m_zobristHash.getBoardHash(), depth, alpha, flag, player);
+            m_TT.insert(m_pBoard->getBoardHash(), depth, alpha, flag, player);
             return alpha;
         } else {
             opponentHasFive = true;
@@ -112,7 +103,7 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
             m_bestScore = val;
         }
         if (val >= beta) {
-            m_TT.insert(m_zobristHash.getBoardHash(), depth, beta, TT::LOWER, player);
+            m_TT.insert(m_pBoard->getBoardHash(), depth, beta, TT::LOWER, player);
             return val;
         }
         if (val > alpha) {
@@ -146,7 +137,7 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
                 m_bestScore = val;
             }
             if (val >= beta) {
-                m_TT.insert(m_zobristHash.getBoardHash(), depth, beta, TT::LOWER, player);
+                m_TT.insert(m_pBoard->getBoardHash(), depth, beta, TT::LOWER, player);
                 return val;
             }
             if (val > alpha) {
@@ -159,7 +150,7 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
         }
     }
 
-    m_TT.insert(m_zobristHash.getBoardHash(), depth, alpha, flag, player);
+    m_TT.insert(m_pBoard->getBoardHash(), depth, alpha, flag, player);
     return alpha;
 }
 
@@ -202,7 +193,6 @@ void Core::makeMove(int x, int y, Board::PIECE_COLOR player) {
     if (m_pBoard->getState(x, y) != Board::BOARD_STATE::UNPLACE) {
         return;
     }
-    m_zobristHash.update(x, y, player);
     m_pBoard->placeAt(x, y, player);
     m_moveGenerator.eraseMove({x, y});
     updateMoveAround(x, y, Board::PIECE_COLOR::BLACK);
@@ -215,7 +205,6 @@ void Core::cancelMove(int x, int y) {
         preState == Board::BOARD_STATE::INVALID) {
         return;
     }
-    m_zobristHash.update(x, y, static_cast<Board::PIECE_COLOR>(preState));
     m_pBoard->unplaceAt(x, y);
     m_moveGenerator.addMove({x, y});
     updateMoveAt(x, y, Board::PIECE_COLOR::BLACK);

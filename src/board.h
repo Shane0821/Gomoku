@@ -1,6 +1,8 @@
 #ifndef BOARD_H
 #define BOARD_H
 
+class Zobrist;
+
 class Board {
    public:
     enum PIECE_COLOR {
@@ -16,6 +18,7 @@ class Board {
     };
 
     Board();
+    ~Board();
 
     /** Display Board */
     void display() const;
@@ -30,11 +33,14 @@ class Board {
 
     int cntNeighbour(int x, int y) const { return m_cntNeighbour[x][y]; }
 
+    unsigned long long getBoardHash() const;
+
     const static int BOARD_SIZE = 15;
     const static int dr[4];
     const static int dc[4];
 
    private:
+    Zobrist *m_pZobristHash = nullptr;
     BOARD_STATE m_boardState[BOARD_SIZE][BOARD_SIZE];
     int m_cntNeighbour[BOARD_SIZE][BOARD_SIZE];
 };

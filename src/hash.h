@@ -11,7 +11,7 @@ class Zobrist {
 
     void update(int x, int y, Board::PIECE_COLOR);
 
-    unsigned long long getBoardHash() { return m_boardHash; }
+    unsigned long long getBoardHash() const { return m_boardHash; }
 
    private:
     unsigned long long m_hashTable[2][Board::BOARD_SIZE][Board::BOARD_SIZE];

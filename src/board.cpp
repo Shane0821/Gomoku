@@ -1,4 +1,5 @@
 #include "board.h"
+#include "hash.h"
 
 #include <iostream>
 
@@ -16,6 +17,12 @@ Board::Board() {
         for (int j = 6; j <= 8; j++) {
             m_cntNeighbour[i][j] = 1;
         }
+
+    m_pZobristHash = new Zobrist();
+}
+
+Board::~Board() {
+    delete m_pZobristHash;
 }
 
 Board::BOARD_STATE Board::getState(int x, int y) const {
@@ -44,6 +51,7 @@ void Board::display() const {
 
 void Board::placeAt(int x, int y, Board::PIECE_COLOR color) {
     m_boardState[x][y] = static_cast<BOARD_STATE>(color);
+    m_pZobristHash->update(x, y, color);
 
     for (int k = 0; k < 4; k++) {
         int tx = x;
@@ -67,7 +75,9 @@ void Board::placeAt(int x, int y, Board::PIECE_COLOR color) {
 }
 
 void Board::unplaceAt(int x, int y) {
+    m_pZobristHash->update(x, y, static_cast<PIECE_COLOR>(m_boardState[x][y]));
     m_boardState[x][y] = Board::BOARD_STATE::UNPLACE;
+
     for (int k = 0; k < 4; k++) {
         int tx = x;
         int ty = y;
@@ -87,4 +97,8 @@ void Board::unplaceAt(int x, int y) {
             m_cntNeighbour[tx][ty]--;
         }
     }
+}
+
+unsigned long long Board::getBoardHash() const {
+    return m_pZobristHash->getBoardHash();
 }
