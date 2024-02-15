@@ -3,7 +3,7 @@
 #pragma GCC optimize("O3")
 
 #include <algorithm>
-#include <ctime>
+#include <chrono>
 #include <iostream>
 #include <random>
 #include <vector>
@@ -55,6 +55,21 @@ class Board {
     Zobrist *m_pZobristHash = nullptr;
     BOARD_STATE m_boardState[BOARD_SIZE][BOARD_SIZE];
     int m_cntNeighbour[BOARD_SIZE][BOARD_SIZE];
+};
+
+class Zobrist {
+   public:
+    Zobrist();
+
+    static unsigned long long generateRandomNumber();
+
+    unsigned long long update(int x, int y, Board::PIECE_COLOR);
+
+    unsigned long long getBoardHash() { return m_boardHash; }
+
+   private:
+    unsigned long long m_hashTable[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
+    unsigned long long m_boardHash;
 };
 
 const int Board::dr[4] = {0, 1, 1, 1};
@@ -637,21 +652,6 @@ int MoveGenerator::sumPlayerScore(Board::PIECE_COLOR color) const {
     return m_sumPlayerScore[color];
 }
 
-class Zobrist {
-   public:
-    Zobrist();
-
-    static unsigned long long generateRandomNumber();
-
-    unsigned long long update(int x, int y, Board::PIECE_COLOR);
-
-    unsigned long long getBoardHash() { return m_boardHash; }
-
-   private:
-    unsigned long long m_hashTable[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
-    unsigned long long m_boardHash;
-};
-
 Zobrist::Zobrist() {
     for (int i = 0; i < 2; i++) {
         for (int x = 0; x < Board::BOARD_SIZE; x++) {
@@ -751,18 +751,21 @@ void TT::insert(unsigned long long hash, int depth, int value, Flag flag,
 
 class Timer {
    public:
-    Timer() { m_preTime = clock(); }
+    Timer() { m_preTime = std::chrono::high_resolution_clock::now(); }
 
-    void recordCurrent() { m_preTime = clock(); }
+    void recordCurrent() { m_preTime = std::chrono::high_resolution_clock::now(); }
 
     int getTimePass() const {
-        return 1.0 * (clock() - m_preTime) / CLOCKS_PER_SEC * 1000;
+        auto now = std::chrono::high_resolution_clock::now();
+        auto duration =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - m_preTime);
+        return duration.count();
     }
 
     const static int TIME_OUT = __INT32_MAX__;
 
    private:
-    time_t m_preTime;
+    std::chrono::high_resolution_clock::time_point m_preTime;
 };
 
 class Core {
@@ -961,8 +964,6 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
 
 int Core::run() {
     if (!m_pBoard) return -1;
-
-    m_timer.recordCurrent();
 
     iterativeDepth = MIN_SEARCH_DEPTH + 1 - m_color;
 
