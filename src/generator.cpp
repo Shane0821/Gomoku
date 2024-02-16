@@ -79,7 +79,6 @@ void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, Scorer::Type
         }
 
         m_cntS4[player][move.x][move.y]++;
-
     } else if (type == Scorer::LIVE_THREE) {
         if (m_cntS4[player][move.x][move.y]) {
             m_playerMoveScore[player][move.x][move.y] +=
@@ -95,8 +94,10 @@ void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, Scorer::Type
     }
 
     m_sumPlayerScore[player] += m_playerMoveScore[player][move.x][move.y];
-    m_maxScore[move.x][move.y] = max(m_playerMoveScore[player][move.x][move.y],
-                                     m_playerMoveScore[player ^ 1][move.x][move.y]);
+
+    m_maxScore[move.x][move.y] =
+        max(m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y],
+            m_playerMoveScore[Board::PIECE_COLOR::BLACK][move.x][move.y]);
 }
 
 void MoveGenerator::addMove(const Move &move) {
