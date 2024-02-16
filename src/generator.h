@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "board.h"
+#include "scorer.h"
 
 class MoveGenerator {
    public:
@@ -17,7 +18,7 @@ class MoveGenerator {
     MoveGenerator();
 
     void sortMoves();
-    void updateMoveScoreByDir(const Move &move, int dir, int w, Board::PIECE_COLOR);
+    void updateMoveScoreByDir(const Move &move, int dir, Scorer::Type, Board::PIECE_COLOR);
     void addMove(const Move &move);
     void eraseMove(const Move &move);
     bool existsMove(const Move &move);
@@ -31,10 +32,11 @@ class MoveGenerator {
    public:
     std::vector<Move> m_moves;
     int m_recorded[Board::BOARD_SIZE][Board::BOARD_SIZE];
-    int m_dirScore[2][4][Board::BOARD_SIZE][Board::BOARD_SIZE];
+    Scorer::Type m_dirType[2][4][Board::BOARD_SIZE][Board::BOARD_SIZE];
     int m_playerMoveScore[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
     int m_maxScore[Board::BOARD_SIZE][Board::BOARD_SIZE];
-    int m_cntKill[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
+    int m_cntS4[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
+    int m_cntL3[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
     int m_sumPlayerScore[2] = {0, 0};
 };
 

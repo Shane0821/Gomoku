@@ -118,6 +118,9 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
             if (m_moveGenerator.playerMoveScore(move, player) >=
                 Scorer::TYPE_SCORES[Scorer::LIVE_FOUR]) {
                 val = INF + depth + KILL_DEPTH - 1;
+            } else if (m_moveGenerator.playerMoveScore(move, player) >=
+                       Scorer::TYPE_SCORES[Scorer::KILL_1]) {
+                val = INF + depth + KILL_DEPTH - 2;
             } else {
                 makeMove(move.x, move.y, player);
                 if (fFoundPv) {
@@ -272,7 +275,7 @@ void Core::updateMoveAt(int x, int y, int dir, Board::PIECE_COLOR player) {
     }
 
     m_moveGenerator.updateMoveScoreByDir({x, y}, dir,
-                                         m_scorer.getScoreByLineState(lineState), player);
+                                         m_scorer.getTypeByLineState(lineState), player);
 }
 
 void Core::updateMoveAt(int x, int y, Board::PIECE_COLOR player) {
@@ -335,7 +338,7 @@ void Core::updateMoveAt(int x, int y, Board::PIECE_COLOR player) {
         }
 
         m_moveGenerator.updateMoveScoreByDir(
-            {x, y}, dir, m_scorer.getScoreByLineState(lineState), player);
+            {x, y}, dir, m_scorer.getTypeByLineState(lineState), player);
     }
 }
 

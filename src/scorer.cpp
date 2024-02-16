@@ -1,6 +1,6 @@
 #include "scorer.h"
 
-const int Scorer::TYPE_SCORES[CNT_TYPES] = {9999999, 1000000, 10000, 1000, 1000,
+const int Scorer::TYPE_SCORES[CNT_TYPES] = {99999999, 10000000, 100000, 10000, 1000, 1000,
                                             100,     100,     10,    0};
 
 const int Scorer::BASE_SCORES[Board::BOARD_SIZE][Board::BOARD_SIZE] = {
