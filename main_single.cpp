@@ -173,22 +173,23 @@ class Scorer {
     enum Type {
         FIVE = 0,
         LIVE_FOUR = 1,
-        KILL = 2,
-        SLEEP_FOUR = 3,
-        LIVE_THREE = 4,
-        SLEEP_THREE = 5,
-        LIVE_TWO = 6,
-        SLEEP_TWO = 7,
-        BASE = 8
+        KILL_1 = 2,
+        KILL_2 = 3,
+        SLEEP_FOUR = 4,
+        LIVE_THREE = 5,
+        SLEEP_THREE = 6,
+        LIVE_TWO = 7,
+        SLEEP_TWO = 8,
+        BASE = 9
     };
 
     Scorer();
     ~Scorer() { delete[] m_pTypeTable; }
 
-    int getScoreByLineState(int state) const { return TYPE_SCORES[m_pTypeTable[state]]; }
+    Type getTypeByLineState(int state) const { return m_pTypeTable[state]; }
 
     const static int CNT_STATES = 19683;
-    const static int CNT_TYPES = 9;
+    const static int CNT_TYPES = 10;
     const static int TYPE_SCORES[CNT_TYPES];
     const static int BASE_SCORES[Board::BOARD_SIZE][Board::BOARD_SIZE];
 
@@ -196,8 +197,8 @@ class Scorer {
     Type *m_pTypeTable;
 };
 
-const int Scorer::TYPE_SCORES[CNT_TYPES] = {999999, 100000, 10000, 1000, 1000,
-                                            100,    100,    10,    0};
+const int Scorer::TYPE_SCORES[CNT_TYPES] = {99999999, 10000000, 100000, 10000, 1000,
+                                            1000,     100,      100,    10,    0};
 
 const int Scorer::BASE_SCORES[Board::BOARD_SIZE][Board::BOARD_SIZE] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -519,7 +520,8 @@ class MoveGenerator {
     MoveGenerator();
 
     void sortMoves();
-    void updateMoveScoreByDir(const Move &move, int dir, int w, Board::PIECE_COLOR);
+    void updateMoveScoreByDir(const Move &move, int dir, Scorer::Type,
+                              Board::PIECE_COLOR);
     void addMove(const Move &move);
     void eraseMove(const Move &move);
     bool existsMove(const Move &move);
@@ -533,10 +535,11 @@ class MoveGenerator {
    public:
     std::vector<Move> m_moves;
     int m_recorded[Board::BOARD_SIZE][Board::BOARD_SIZE];
-    int m_dirScore[2][4][Board::BOARD_SIZE][Board::BOARD_SIZE];
+    Scorer::Type m_dirType[2][4][Board::BOARD_SIZE][Board::BOARD_SIZE];
     int m_playerMoveScore[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
     int m_maxScore[Board::BOARD_SIZE][Board::BOARD_SIZE];
-    int m_cntKill[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
+    int m_cntS4[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
+    int m_cntL3[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
     int m_sumPlayerScore[2] = {0, 0};
 };
 
@@ -563,31 +566,69 @@ void MoveGenerator::sortMoves() {
     }
 }
 
-void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, int w,
+void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, Scorer::Type type,
                                          Board::PIECE_COLOR player) {
+    if (type == m_dirType[player][dir][move.x][move.y]) return;
+
     m_sumPlayerScore[player] -= m_playerMoveScore[player][move.x][move.y];
 
-    m_playerMoveScore[player][move.x][move.y] -= m_dirScore[player][dir][move.x][move.y];
-    if (m_dirScore[player][dir][move.x][move.y] ==
-            Scorer::TYPE_SCORES[Scorer::SLEEP_FOUR] ||
-        m_dirScore[player][dir][move.x][move.y] ==
-            Scorer::TYPE_SCORES[Scorer::LIVE_THREE]) {
-        m_cntKill[player][move.x][move.y]--;
-        if (m_cntKill[player][move.x][move.y] == 1) {
+    Scorer::Type preType = m_dirType[player][dir][move.x][move.y];
+    m_playerMoveScore[player][move.x][move.y] -= Scorer::TYPE_SCORES[preType];
+
+    if (preType == Scorer::SLEEP_FOUR) {
+        m_cntS4[player][move.x][move.y]--;
+
+        if (m_cntS4[player][move.x][move.y]) {
             m_playerMoveScore[player][move.x][move.y] -=
-                Scorer::TYPE_SCORES[Scorer::KILL];
+                Scorer::TYPE_SCORES[Scorer::KILL_1];
+        }
+
+        if (m_cntL3[player][move.x][move.y]) {
+            m_playerMoveScore[player][move.x][move.y] -=
+                Scorer::TYPE_SCORES[Scorer::KILL_1];
+        }
+    } else if (preType == Scorer::LIVE_THREE) {
+        m_cntL3[player][move.x][move.y]--;
+
+        if (m_cntS4[player][move.x][move.y]) {
+            m_playerMoveScore[player][move.x][move.y] -=
+                Scorer::TYPE_SCORES[Scorer::KILL_1];
+        }
+
+        if (m_cntL3[player][move.x][move.y]) {
+            m_playerMoveScore[player][move.x][move.y] -=
+                Scorer::TYPE_SCORES[Scorer::KILL_2];
         }
     }
 
-    m_dirScore[player][dir][move.x][move.y] = w;
-    m_playerMoveScore[player][move.x][move.y] += w;
-    if (w == Scorer::TYPE_SCORES[Scorer::SLEEP_FOUR] ||
-        w == Scorer::TYPE_SCORES[Scorer::LIVE_THREE]) {
-        m_cntKill[player][move.x][move.y]++;
-        if (m_cntKill[player][move.x][move.y] == 2) {
+    m_dirType[player][dir][move.x][move.y] = type;
+    m_playerMoveScore[player][move.x][move.y] += Scorer::TYPE_SCORES[type];
+
+    if (type == Scorer::SLEEP_FOUR) {
+        if (m_cntS4[player][move.x][move.y]) {
             m_playerMoveScore[player][move.x][move.y] +=
-                Scorer::TYPE_SCORES[Scorer::KILL];
+                Scorer::TYPE_SCORES[Scorer::KILL_1];
         }
+
+        if (m_cntL3[player][move.x][move.y]) {
+            m_playerMoveScore[player][move.x][move.y] +=
+                Scorer::TYPE_SCORES[Scorer::KILL_1];
+        }
+
+        m_cntS4[player][move.x][move.y]++;
+
+    } else if (type == Scorer::LIVE_THREE) {
+        if (m_cntS4[player][move.x][move.y]) {
+            m_playerMoveScore[player][move.x][move.y] +=
+                Scorer::TYPE_SCORES[Scorer::KILL_1];
+        }
+
+        if (m_cntL3[player][move.x][move.y]) {
+            m_playerMoveScore[player][move.x][move.y] +=
+                Scorer::TYPE_SCORES[Scorer::KILL_2];
+        }
+
+        m_cntL3[player][move.x][move.y]++;
     }
 
     m_sumPlayerScore[player] += m_playerMoveScore[player][move.x][move.y];
@@ -604,8 +645,8 @@ void MoveGenerator::addMove(const Move &move) {
     int baseScore = Scorer::BASE_SCORES[move.x][move.y];
 
     for (int i = 0; i < 4; i++) {
-        m_dirScore[Board::PIECE_COLOR::BLACK][i][move.x][move.y] =
-            m_dirScore[Board::PIECE_COLOR::WHITE][i][move.x][move.y] = 0;
+        m_dirType[Board::PIECE_COLOR::BLACK][i][move.x][move.y] =
+            m_dirType[Board::PIECE_COLOR::WHITE][i][move.x][move.y] = Scorer::BASE;
     }
 
     m_playerMoveScore[Board::PIECE_COLOR::BLACK][move.x][move.y] =
@@ -613,8 +654,11 @@ void MoveGenerator::addMove(const Move &move) {
 
     m_maxScore[move.x][move.y] = baseScore;
 
-    m_cntKill[Board::PIECE_COLOR::BLACK][move.x][move.y] =
-        m_cntKill[Board::PIECE_COLOR::WHITE][move.x][move.y] = 0;
+    m_cntL3[Board::PIECE_COLOR::BLACK][move.x][move.y] =
+        m_cntL3[Board::PIECE_COLOR::WHITE][move.x][move.y] = 0;
+
+    m_cntS4[Board::PIECE_COLOR::BLACK][move.x][move.y] =
+        m_cntS4[Board::PIECE_COLOR::WHITE][move.x][move.y] = 0;
 
     m_sumPlayerScore[Board::PIECE_COLOR::BLACK] += baseScore;
     m_sumPlayerScore[Board::PIECE_COLOR::WHITE] += baseScore;
@@ -926,6 +970,9 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
             if (m_moveGenerator.playerMoveScore(move, player) >=
                 Scorer::TYPE_SCORES[Scorer::LIVE_FOUR]) {
                 val = INF + depth + KILL_DEPTH - 1;
+            } else if (m_moveGenerator.playerMoveScore(move, player) >=
+                       Scorer::TYPE_SCORES[Scorer::KILL_1]) {
+                val = INF + depth + KILL_DEPTH - 2;
             } else {
                 makeMove(move.x, move.y, player);
                 if (fFoundPv) {
@@ -1078,7 +1125,7 @@ void Core::updateMoveAt(int x, int y, int dir, Board::PIECE_COLOR player) {
     }
 
     m_moveGenerator.updateMoveScoreByDir({x, y}, dir,
-                                         m_scorer.getScoreByLineState(lineState), player);
+                                         m_scorer.getTypeByLineState(lineState), player);
 }
 
 void Core::updateMoveAt(int x, int y, Board::PIECE_COLOR player) {
@@ -1141,7 +1188,7 @@ void Core::updateMoveAt(int x, int y, Board::PIECE_COLOR player) {
         }
 
         m_moveGenerator.updateMoveScoreByDir(
-            {x, y}, dir, m_scorer.getScoreByLineState(lineState), player);
+            {x, y}, dir, m_scorer.getTypeByLineState(lineState), player);
     }
 }
 
