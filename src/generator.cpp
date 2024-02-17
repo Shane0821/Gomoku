@@ -33,67 +33,57 @@ void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, Scorer::Type
                                          Board::PIECE_COLOR player) {
     if (type == m_dirType[player][dir][move.x][move.y]) return;
 
-    m_sumPlayerScore[player] -= m_playerMoveScore[player][move.x][move.y];
-
     Scorer::Type preType = m_dirType[player][dir][move.x][move.y];
-    m_playerMoveScore[player][move.x][move.y] -= Scorer::TYPE_SCORES[preType];
+    m_dirType[player][dir][move.x][move.y] = type;
+
+    int dw = Scorer::TYPE_SCORES[type] - Scorer::TYPE_SCORES[preType];
 
     if (preType == Scorer::SLEEP_FOUR) {
         m_cntS4[player][move.x][move.y]--;
 
         if (m_cntS4[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] -=
-                Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw -= Scorer::TYPE_SCORES[Scorer::KILL_1];
         }
 
         if (m_cntL3[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] -=
-                Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw -= Scorer::TYPE_SCORES[Scorer::KILL_1];
         }
     } else if (preType == Scorer::LIVE_THREE) {
         m_cntL3[player][move.x][move.y]--;
 
         if (m_cntS4[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] -=
-                Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw -= Scorer::TYPE_SCORES[Scorer::KILL_1];
         }
 
         if (m_cntL3[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] -=
-                Scorer::TYPE_SCORES[Scorer::KILL_2];
+            dw -= Scorer::TYPE_SCORES[Scorer::KILL_2];
         }
     }
 
-    m_dirType[player][dir][move.x][move.y] = type;
-    m_playerMoveScore[player][move.x][move.y] += Scorer::TYPE_SCORES[type];
-
     if (type == Scorer::SLEEP_FOUR) {
         if (m_cntS4[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] +=
-                Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw += Scorer::TYPE_SCORES[Scorer::KILL_1];
         }
 
         if (m_cntL3[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] +=
-                Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw += Scorer::TYPE_SCORES[Scorer::KILL_1];
         }
 
         m_cntS4[player][move.x][move.y]++;
     } else if (type == Scorer::LIVE_THREE) {
         if (m_cntS4[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] +=
-                Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw += Scorer::TYPE_SCORES[Scorer::KILL_1];
         }
 
         if (m_cntL3[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] +=
-                Scorer::TYPE_SCORES[Scorer::KILL_2];
+            dw += Scorer::TYPE_SCORES[Scorer::KILL_2];
         }
 
         m_cntL3[player][move.x][move.y]++;
     }
 
-    m_sumPlayerScore[player] += m_playerMoveScore[player][move.x][move.y];
+    m_playerMoveScore[player][move.x][move.y] += dw;
+    m_sumPlayerScore[player] += dw;
 
     m_maxScore[move.x][move.y] =
         max(m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y],
