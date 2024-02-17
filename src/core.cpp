@@ -213,7 +213,6 @@ void Core::makeMove(int x, int y, Board::PIECE_COLOR player) {
 }
 
 void Core::cancelMove(int x, int y) {
-    Board::BOARD_STATE preState = m_pBoard->getState(x, y);
     m_pBoard->unplaceAt(x, y);
     m_moveGenerator.addMove({x, y});
     updateMoveAt(x, y, Board::PIECE_COLOR::BLACK);
