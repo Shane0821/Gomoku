@@ -206,9 +206,6 @@ int Core::run() {
 }
 
 void Core::makeMove(int x, int y, Board::PIECE_COLOR player) {
-    if (m_pBoard->getState(x, y) != Board::BOARD_STATE::UNPLACE) {
-        return;
-    }
     m_pBoard->placeAt(x, y, player);
     m_moveGenerator.eraseMove({x, y});
     updateMoveAround(x, y, Board::PIECE_COLOR::BLACK);
@@ -217,10 +214,6 @@ void Core::makeMove(int x, int y, Board::PIECE_COLOR player) {
 
 void Core::cancelMove(int x, int y) {
     Board::BOARD_STATE preState = m_pBoard->getState(x, y);
-    if (preState == Board::BOARD_STATE::UNPLACE ||
-        preState == Board::BOARD_STATE::INVALID) {
-        return;
-    }
     m_pBoard->unplaceAt(x, y);
     m_moveGenerator.addMove({x, y});
     updateMoveAt(x, y, Board::PIECE_COLOR::BLACK);
