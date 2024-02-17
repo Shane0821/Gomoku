@@ -1,7 +1,8 @@
 #include "board.h"
-#include "hash.h"
 
 #include <iostream>
+
+#include "hash.h"
 
 const int Board::dr[4] = {0, 1, 1, 1};
 const int Board::dc[4] = {1, 1, 0, -1};
@@ -21,9 +22,7 @@ Board::Board() {
     m_pZobristHash = new Zobrist();
 }
 
-Board::~Board() {
-    delete m_pZobristHash;
-}
+Board::~Board() { delete m_pZobristHash; }
 
 Board::BOARD_STATE Board::getState(int x, int y) const {
     if (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE) {
@@ -99,6 +98,4 @@ void Board::unplaceAt(int x, int y) {
     }
 }
 
-unsigned long long Board::getBoardHash() const {
-    return m_pZobristHash->getBoardHash();
-}
+unsigned long long Board::getBoardHash() const { return m_pZobristHash->getBoardHash(); }
