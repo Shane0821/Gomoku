@@ -4,7 +4,7 @@
 #define max(a, b) ((a) >= (b) ? (a) : (b))
 
 bool Core::ITERATIVE_DEEPENING = false;
-int Core::BRANCH_FACTOR = 16;
+int Core::BRANCH_FACTOR = 20;
 int Core::MIN_SEARCH_DEPTH = 4;
 int Core::MAX_SEARCH_DEPTH = 10;
 int Core::KILL_DEPTH = 4;
@@ -222,17 +222,21 @@ void Core::cancelMove(int x, int y) {
 }
 
 void Core::updateMoveAt(int x, int y, int dir, Board::PIECE_COLOR player) {
-    int lx = x, ly = y, l = 0, cnt2 = 0;
-    while (l < 4) {
-        Board::BOARD_STATE state =
-            m_pBoard->getState(lx - Board::dr[dir], ly - Board::dc[dir]);
+    int tx = x, ty = y, cnt2 = 0;
+    Board::BOARD_STATE state;
+
+    int lineState = 0, base = 1;
+    for (int step = 1; step <= 4; step++) {
+        tx -= Board::dr[dir];
+        ty -= Board::dc[dir];
+        state = m_pBoard->getState(tx, ty);
+
         if (state == Board::BOARD_STATE::INVALID || state == (player ^ 1)) {
             break;
         }
 
-        l++;
-        lx -= Board::dr[dir];
-        ly -= Board::dc[dir];
+        lineState = lineState + (state == Board::UNPLACE ? 2 : 1) * base;
+        base *= 3;
 
         if (state == Board::BOARD_STATE::UNPLACE) {
             cnt2++;
@@ -244,28 +248,17 @@ void Core::updateMoveAt(int x, int y, int dir, Board::PIECE_COLOR player) {
         }
     }
 
-    int lineState = 0;
-    for (int step = 1; step <= l; step++) {
-        lineState =
-            lineState * 3 + (m_pBoard->getState(lx, ly) == Board::UNPLACE ? 2 : 1);
-        lx += Board::dr[dir];
-        ly += Board::dc[dir];
-    }
-
     lineState = lineState * 3 + 1;
 
-    int rx = x, ry = y, r = 0;
-    cnt2 = 0;
-    while (r < 4) {
-        Board::BOARD_STATE state =
-            m_pBoard->getState(rx + Board::dr[dir], ry + Board::dc[dir]);
+    tx = x, ty = y, cnt2 = 0;
+    for (int step = 1; step <= 4; step++) {
+        tx += Board::dr[dir];
+        ty += Board::dc[dir];
+        state = m_pBoard->getState(tx, ty);
+
         if (state == Board::BOARD_STATE::INVALID || state == (player ^ 1)) {
             break;
         }
-
-        r++;
-        rx += Board::dr[dir];
-        ry += Board::dc[dir];
 
         lineState = lineState * 3 + (state == Board::UNPLACE ? 2 : 1);
 
@@ -285,17 +278,21 @@ void Core::updateMoveAt(int x, int y, int dir, Board::PIECE_COLOR player) {
 
 void Core::updateMoveAt(int x, int y, Board::PIECE_COLOR player) {
     for (int dir = 0; dir < 4; dir++) {
-        int lx = x, ly = y, l = 0, cnt2 = 0;
-        while (l < 4) {
-            Board::BOARD_STATE state =
-                m_pBoard->getState(lx - Board::dr[dir], ly - Board::dc[dir]);
+        int tx = x, ty = y, cnt2 = 0;
+        Board::BOARD_STATE state;
+
+        int lineState = 0, base = 1;
+        for (int step = 1; step <= 4; step++) {
+            tx -= Board::dr[dir];
+            ty -= Board::dc[dir];
+            state = m_pBoard->getState(tx, ty);
+
             if (state == Board::BOARD_STATE::INVALID || state == (player ^ 1)) {
                 break;
             }
 
-            l++;
-            lx -= Board::dr[dir];
-            ly -= Board::dc[dir];
+            lineState = lineState + (state == Board::UNPLACE ? 2 : 1) * base;
+            base *= 3;
 
             if (state == Board::BOARD_STATE::UNPLACE) {
                 cnt2++;
@@ -307,28 +304,17 @@ void Core::updateMoveAt(int x, int y, Board::PIECE_COLOR player) {
             }
         }
 
-        int lineState = 0;
-        for (int step = 1; step <= l; step++) {
-            lineState =
-                lineState * 3 + (m_pBoard->getState(lx, ly) == Board::UNPLACE ? 2 : 1);
-            lx += Board::dr[dir];
-            ly += Board::dc[dir];
-        }
-
         lineState = lineState * 3 + 1;
 
-        int rx = x, ry = y, r = 0;
-        cnt2 = 0;
-        while (r < 4) {
-            Board::BOARD_STATE state =
-                m_pBoard->getState(rx + Board::dr[dir], ry + Board::dc[dir]);
+        tx = x, ty = y, cnt2 = 0;
+        for (int step = 1; step <= 4; step++) {
+            tx += Board::dr[dir];
+            ty += Board::dc[dir];
+            state = m_pBoard->getState(tx, ty);
+
             if (state == Board::BOARD_STATE::INVALID || state == (player ^ 1)) {
                 break;
             }
-
-            r++;
-            rx += Board::dr[dir];
-            ry += Board::dc[dir];
 
             lineState = lineState * 3 + (state == Board::UNPLACE ? 2 : 1);
 
