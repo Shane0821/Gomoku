@@ -84,8 +84,6 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
         i++;
     }
 
-    int val = alpha;
-
     if (opponentHasFive) {
         // must block the opponent's FIVE
         i--;
@@ -93,7 +91,7 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
         auto &move = moves[i];
 
         makeMove(move.x, move.y, player);
-        val = -negMiniMaxSearch(depth - 1, opponent, -beta, -alpha);
+        int val = -negMiniMaxSearch(depth - 1, opponent, -beta, -alpha);
         cancelMove(move.x, move.y);
 
         if (val == -Timer::TIME_OUT) return Timer::TIME_OUT;
@@ -115,12 +113,27 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
         while (i < cntMoves) {
             auto &move = moves[i];
 
+            int val = alpha;
+
             if (m_moveGenerator.playerMoveScore(move, player) >=
                 Scorer::TYPE_SCORES[Scorer::LIVE_FOUR]) {
                 val = INF + depth + KILL_DEPTH - 1;
-            } else if (m_moveGenerator.playerMoveScore(move, player) >=
-                       Scorer::TYPE_SCORES[Scorer::KILL_1]) {
-                val = INF + depth + KILL_DEPTH - 2;
+
+                if (depth == iterativeDepth && val > m_bestScore) {
+                    m_bestMove = move;
+                    m_bestScore = val;
+                }
+                if (val >= beta) {
+                    m_TT.insert(m_pBoard->getBoardHash(), depth, beta, TT::LOWER, player);
+                    return val;
+                }
+                if (val > alpha) {
+                    flag = TT::EXACT;
+                    fFoundPv = true;
+                    alpha = val;
+                }
+                m_TT.insert(m_pBoard->getBoardHash(), depth, alpha, flag, player);
+                return alpha;
             } else {
                 makeMove(move.x, move.y, player);
                 if (fFoundPv) {

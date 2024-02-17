@@ -570,68 +570,58 @@ void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, Scorer::Type
                                          Board::PIECE_COLOR player) {
     if (type == m_dirType[player][dir][move.x][move.y]) return;
 
-    m_sumPlayerScore[player] -= m_playerMoveScore[player][move.x][move.y];
-
     Scorer::Type preType = m_dirType[player][dir][move.x][move.y];
-    m_playerMoveScore[player][move.x][move.y] -= Scorer::TYPE_SCORES[preType];
+    m_dirType[player][dir][move.x][move.y] = type;
+
+    int dw = Scorer::TYPE_SCORES[type] - Scorer::TYPE_SCORES[preType];
 
     if (preType == Scorer::SLEEP_FOUR) {
         m_cntS4[player][move.x][move.y]--;
 
         if (m_cntS4[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] -=
-                Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw -= Scorer::TYPE_SCORES[Scorer::KILL_1];
         }
 
         if (m_cntL3[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] -=
-                Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw -= Scorer::TYPE_SCORES[Scorer::KILL_1];
         }
     } else if (preType == Scorer::LIVE_THREE) {
         m_cntL3[player][move.x][move.y]--;
 
         if (m_cntS4[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] -=
-                Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw -= Scorer::TYPE_SCORES[Scorer::KILL_1];
         }
 
         if (m_cntL3[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] -=
-                Scorer::TYPE_SCORES[Scorer::KILL_2];
+            dw -= Scorer::TYPE_SCORES[Scorer::KILL_2];
         }
     }
 
-    m_dirType[player][dir][move.x][move.y] = type;
-    m_playerMoveScore[player][move.x][move.y] += Scorer::TYPE_SCORES[type];
-
     if (type == Scorer::SLEEP_FOUR) {
         if (m_cntS4[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] +=
-                Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw += Scorer::TYPE_SCORES[Scorer::KILL_1];
         }
 
         if (m_cntL3[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] +=
-                Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw += Scorer::TYPE_SCORES[Scorer::KILL_1];
         }
 
         m_cntS4[player][move.x][move.y]++;
-
     } else if (type == Scorer::LIVE_THREE) {
         if (m_cntS4[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] +=
-                Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw += Scorer::TYPE_SCORES[Scorer::KILL_1];
         }
 
         if (m_cntL3[player][move.x][move.y]) {
-            m_playerMoveScore[player][move.x][move.y] +=
-                Scorer::TYPE_SCORES[Scorer::KILL_2];
+            dw += Scorer::TYPE_SCORES[Scorer::KILL_2];
         }
 
         m_cntL3[player][move.x][move.y]++;
     }
 
-    m_sumPlayerScore[player] += m_playerMoveScore[player][move.x][move.y];
+    m_playerMoveScore[player][move.x][move.y] += dw;
+    m_sumPlayerScore[player] += dw;
+
     m_maxScore[move.x][move.y] =
         max(m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y],
             m_playerMoveScore[Board::PIECE_COLOR::BLACK][move.x][move.y]);
@@ -857,7 +847,7 @@ class Core {
 };
 
 bool Core::ITERATIVE_DEEPENING = true;
-int Core::BRANCH_FACTOR = 16;
+int Core::BRANCH_FACTOR = 20;
 int Core::MIN_SEARCH_DEPTH = 4;
 int Core::MAX_SEARCH_DEPTH = 10;
 int Core::KILL_DEPTH = 4;
@@ -937,8 +927,6 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
         i++;
     }
 
-    int val = alpha;
-
     if (opponentHasFive) {
         // must block the opponent's FIVE
         i--;
@@ -946,7 +934,7 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
         auto &move = moves[i];
 
         makeMove(move.x, move.y, player);
-        val = -negMiniMaxSearch(depth - 1, opponent, -beta, -alpha);
+        int val = -negMiniMaxSearch(depth - 1, opponent, -beta, -alpha);
         cancelMove(move.x, move.y);
 
         if (val == -Timer::TIME_OUT) return Timer::TIME_OUT;
@@ -968,12 +956,27 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
         while (i < cntMoves) {
             auto &move = moves[i];
 
+            int val = alpha;
+
             if (m_moveGenerator.playerMoveScore(move, player) >=
                 Scorer::TYPE_SCORES[Scorer::LIVE_FOUR]) {
                 val = INF + depth + KILL_DEPTH - 1;
-            } else if (m_moveGenerator.playerMoveScore(move, player) >=
-                       Scorer::TYPE_SCORES[Scorer::KILL_1]) {
-                val = INF + depth + KILL_DEPTH - 2;
+
+                if (depth == iterativeDepth && val > m_bestScore) {
+                    m_bestMove = move;
+                    m_bestScore = val;
+                }
+                if (val >= beta) {
+                    m_TT.insert(m_pBoard->getBoardHash(), depth, beta, TT::LOWER, player);
+                    return val;
+                }
+                if (val > alpha) {
+                    flag = TT::EXACT;
+                    fFoundPv = true;
+                    alpha = val;
+                }
+                m_TT.insert(m_pBoard->getBoardHash(), depth, alpha, flag, player);
+                return alpha;
             } else {
                 makeMove(move.x, move.y, player);
                 if (fFoundPv) {
@@ -1255,7 +1258,7 @@ void Core::updateMoveAround(int x, int y, Board::PIECE_COLOR player) {
 }
 
 int Core::evaluate() const {
-    return m_moveGenerator.sumPlayerScore(Board::PIECE_COLOR::BLACK) * 6 -
+    return m_moveGenerator.sumPlayerScore(Board::PIECE_COLOR::BLACK) * 5 -
            m_moveGenerator.sumPlayerScore(Board::PIECE_COLOR::WHITE);
 }
 
