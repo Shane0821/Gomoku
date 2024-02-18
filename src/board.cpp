@@ -14,6 +14,7 @@ Board::Board() {
             m_cntNeighbour[i][j] = 0;
         }
 
+    // initially we only consider moves in the center of the board
     for (int i = 6; i <= 8; i++)
         for (int j = 6; j <= 8; j++) {
             m_cntNeighbour[i][j] = 1;
