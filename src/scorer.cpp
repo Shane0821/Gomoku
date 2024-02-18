@@ -1,7 +1,7 @@
 #include "scorer.h"
 
-const int Scorer::TYPE_SCORES[CNT_TYPES] = {99999999, 10000000, 100000, 10000, 1000, 1000,
-                                            100,     100,     10,    0};
+const int Scorer::TYPE_SCORES[CNT_TYPES] = {99999999, 10000000, 100000, 10000, 1000,
+                                            1000,     100,      100,    10,    0};
 
 const int Scorer::BASE_SCORES[Board::BOARD_SIZE][Board::BOARD_SIZE] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -23,6 +23,7 @@ const int Scorer::BASE_SCORES[Board::BOARD_SIZE][Board::BOARD_SIZE] = {
 Scorer::Scorer() {
     m_pTypeTable = new Type[CNT_STATES];
     for (int i = 0; i < CNT_STATES; i++) m_pTypeTable[i] = BASE;
+    // refer to /scoretable
     m_pTypeTable[364] = FIVE;
     m_pTypeTable[1093] = FIVE;
     m_pTypeTable[1094] = FIVE;
