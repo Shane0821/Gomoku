@@ -117,6 +117,7 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
 
             if (m_moveGenerator.playerMoveScore(move, player) >=
                 Scorer::TYPE_SCORES[Scorer::LIVE_FOUR]) {
+                // since opponent has no FIVE, we can win
                 val = INF + depth + KILL_DEPTH - 1;
 
                 if (depth == iterativeDepth && val > m_bestScore) {
@@ -175,6 +176,8 @@ int Core::run() {
 
     m_timer.recordCurrent();
 
+    // if core is white, we search for odd depth, so that evaluation is done at black
+    // player's point of view
     iterativeDepth = MIN_SEARCH_DEPTH + 1 - m_color;
 
     if (ITERATIVE_DEEPENING) {
