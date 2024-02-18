@@ -519,13 +519,14 @@ class MoveGenerator {
 
     MoveGenerator();
 
-    void sortMoves();
     void updateMoveScoreByDir(const Move &move, int dir, Scorer::Type,
                               Board::PIECE_COLOR);
     void addMove(const Move &move);
     void eraseMove(const Move &move);
     bool existsMove(const Move &move);
     std::vector<Move> generateMovesList(int cnt);
+    std::vector<Move> generateKillMovesList();
+    void setGenKillFlag(bool flag);
     int playerMoveScore(const Move &move, Board::PIECE_COLOR color) const;
     int maxMoveScore(const Move &move) const;
     int sumPlayerScore(Board::PIECE_COLOR color) const;
@@ -533,7 +534,13 @@ class MoveGenerator {
     const static int INVALID_MOVE_WEIGHT = -__INT32_MAX__;
 
    public:
+    void sortMoves();
+    void eraseKillMove(const Move &move);
+    void addKillMove(const Move &move);
+
     std::vector<Move> m_moves;
+    std::vector<Move> m_killMoves;
+    int m_killMovePos[Board::BOARD_SIZE][Board::BOARD_SIZE];
     int m_recorded[Board::BOARD_SIZE][Board::BOARD_SIZE];
     Scorer::Type m_dirType[2][4][Board::BOARD_SIZE][Board::BOARD_SIZE];
     int m_playerMoveScore[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
@@ -541,6 +548,7 @@ class MoveGenerator {
     int m_cntS4[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
     int m_cntL3[2][Board::BOARD_SIZE][Board::BOARD_SIZE];
     int m_sumPlayerScore[2] = {0, 0};
+    bool m_genKillFlag = false;
 };
 
 MoveGenerator::MoveGenerator() {
@@ -548,6 +556,7 @@ MoveGenerator::MoveGenerator() {
         for (int j = 0; j < Board::BOARD_SIZE; ++j) {
             m_maxScore[i][j] = INVALID_MOVE_WEIGHT;
             m_recorded[i][j] = 0;
+            m_killMovePos[i][j] = -1;
         }
     }
 }
@@ -622,9 +631,19 @@ void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, Scorer::Type
     m_playerMoveScore[player][move.x][move.y] += dw;
     m_sumPlayerScore[player] += dw;
 
-    m_maxScore[move.x][move.y] =
-        max(m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y],
-            m_playerMoveScore[Board::PIECE_COLOR::BLACK][move.x][move.y]);
+    int preMaxScore = m_maxScore[move.x][move.y];
+    int newMaxScore = max(m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y],
+                          m_playerMoveScore[Board::PIECE_COLOR::BLACK][move.x][move.y]);
+
+    m_maxScore[move.x][move.y] = newMaxScore;
+
+    if (preMaxScore < Scorer::TYPE_SCORES[Scorer::KILL_2] &&
+        newMaxScore >= Scorer::TYPE_SCORES[Scorer::KILL_2]) {
+        addKillMove(move);
+    } else if (preMaxScore >= Scorer::TYPE_SCORES[Scorer::KILL_2] &&
+               newMaxScore < Scorer::TYPE_SCORES[Scorer::KILL_2]) {
+        eraseKillMove(move);
+    }
 }
 
 void MoveGenerator::addMove(const Move &move) {
@@ -662,6 +681,23 @@ void MoveGenerator::eraseMove(const Move &move) {
         m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y];
 
     m_maxScore[move.x][move.y] = INVALID_MOVE_WEIGHT;
+
+    if (m_killMovePos[move.x][move.y] != -1) {
+        eraseKillMove(move);
+    }
+}
+
+void MoveGenerator::eraseKillMove(const Move &move) {
+    m_killMovePos[m_killMoves.back().x][m_killMoves.back().y] =
+        m_killMovePos[move.x][move.y];
+    std::swap(m_killMoves[m_killMovePos[move.x][move.y]], m_killMoves.back());
+    m_killMovePos[move.x][move.y] = -1;
+    m_killMoves.pop_back();
+}
+
+void MoveGenerator::addKillMove(const Move &move) {
+    m_killMovePos[move.x][move.y] = m_killMoves.size();
+    m_killMoves.push_back(move);
 }
 
 std::vector<MoveGenerator::Move> MoveGenerator::generateMovesList(int cnt) {
@@ -669,6 +705,10 @@ std::vector<MoveGenerator::Move> MoveGenerator::generateMovesList(int cnt) {
     return cnt < m_moves.size()
                ? std::vector<Move>(m_moves.begin(), m_moves.begin() + cnt)
                : m_moves;
+}
+
+std::vector<MoveGenerator::Move> MoveGenerator::generateKillMovesList() {
+    return m_killMoves;
 }
 
 bool MoveGenerator::existsMove(const Move &move) {
@@ -825,6 +865,8 @@ class Core {
 
    private:
     int negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int beta);
+    int maxKillSearch(int depth);
+    int minKillSearch(int depth);
     void updateMoveAt(int x, int y, Board::PIECE_COLOR);
     void updateMoveAt(int x, int y, int dir, Board::PIECE_COLOR);
     void updateMoveAround(int x, int y, Board::PIECE_COLOR);
@@ -868,9 +910,62 @@ Core::Core(Board *pBoard) : m_pBoard(pBoard) {
     }
 }
 
+int Core::maxKillSearch(int depth) {
+    if (depth == 0) {
+        return 0;
+    }
+
+    if (m_timer.getTimePass() >= TIME_LIMIT) {
+        return Timer::TIME_OUT;
+    }
+
+    auto moves = m_moveGenerator.generateKillMovesList();
+
+    for (auto &move : moves) {
+        auto blackScore =
+            m_moveGenerator.playerMoveScore(move, Board::PIECE_COLOR::BLACK);
+        if (blackScore >= Scorer::TYPE_SCORES[Scorer::FIVE]) {
+            return INF + depth;
+        } else if (blackScore < Scorer::TYPE_SCORES[Scorer::KILL_2]) {
+            continue;
+        }
+        makeMove(move.x, move.y, Board::PIECE_COLOR::BLACK);
+        int val = minKillSearch(depth - 1);
+        cancelMove(move.x, move.y);
+        if (val == Timer::TIME_OUT) return Timer::TIME_OUT;
+        if (val) return val;
+    }
+    return 0;
+}
+
+int Core::minKillSearch(int depth) {
+    if (m_timer.getTimePass() >= TIME_LIMIT) {
+        return Timer::TIME_OUT;
+    }
+
+    auto moves = m_moveGenerator.generateKillMovesList();
+    int minVal = INF + KILL_DEPTH;
+    for (auto &move : moves) {
+        if (m_moveGenerator.playerMoveScore(move, Board::PIECE_COLOR::WHITE) >=
+            Scorer::TYPE_SCORES[Scorer::FIVE]) {
+            return 0;
+        }
+        makeMove(move.x, move.y, Board::PIECE_COLOR::WHITE);
+        int val = maxKillSearch(depth - 1);
+        cancelMove(move.x, move.y);
+        if (val == Timer::TIME_OUT) return Timer::TIME_OUT;
+        if (val == 0) return 0;
+        if (val < minVal) minVal = val;
+    }
+    return minVal;
+}
+
 int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int beta) {
     if (depth == 0) {
-        int val = evaluate();
+        int val = maxKillSearch(KILL_DEPTH);
+
+        if (val == 0 || val == Timer::TIME_OUT) val = evaluate();
+
         m_TT.insert(m_pBoard->getBoardHash(), depth, val, TT::EXACT, player);
         return val;
     }

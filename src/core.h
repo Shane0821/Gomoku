@@ -30,6 +30,8 @@ class Core {
 
    private:
     int negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int beta);
+    int maxKillSearch(int depth);
+    int minKillSearch(int depth);
     void updateMoveAt(int x, int y, Board::PIECE_COLOR);
     void updateMoveAt(int x, int y, int dir, Board::PIECE_COLOR);
     void updateMoveAround(int x, int y, Board::PIECE_COLOR);

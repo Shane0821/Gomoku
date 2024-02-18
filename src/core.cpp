@@ -25,9 +25,62 @@ Core::Core(Board *pBoard) : m_pBoard(pBoard) {
     }
 }
 
+int Core::maxKillSearch(int depth) {
+    if (depth == 0) {
+        return 0;
+    }
+
+    if (m_timer.getTimePass() >= TIME_LIMIT) {
+        return Timer::TIME_OUT;
+    }
+
+    auto moves = m_moveGenerator.generateKillMovesList();
+
+    for (auto &move : moves) {
+        auto blackScore =
+            m_moveGenerator.playerMoveScore(move, Board::PIECE_COLOR::BLACK);
+        if (blackScore >= Scorer::TYPE_SCORES[Scorer::FIVE]) {
+            return INF + depth;
+        } else if (blackScore < Scorer::TYPE_SCORES[Scorer::KILL_2]) {
+            continue;
+        }
+        makeMove(move.x, move.y, Board::PIECE_COLOR::BLACK);
+        int val = minKillSearch(depth - 1);
+        cancelMove(move.x, move.y);
+        if (val == Timer::TIME_OUT) return Timer::TIME_OUT;
+        if (val) return val;
+    }
+    return 0;
+}
+
+int Core::minKillSearch(int depth) {
+    if (m_timer.getTimePass() >= TIME_LIMIT) {
+        return Timer::TIME_OUT;
+    }
+
+    auto moves = m_moveGenerator.generateKillMovesList();
+    int minVal = INF + KILL_DEPTH;
+    for (auto &move : moves) {
+        if (m_moveGenerator.playerMoveScore(move, Board::PIECE_COLOR::WHITE) >=
+            Scorer::TYPE_SCORES[Scorer::FIVE]) {
+            return 0;
+        }
+        makeMove(move.x, move.y, Board::PIECE_COLOR::WHITE);
+        int val = maxKillSearch(depth - 1);
+        cancelMove(move.x, move.y);
+        if (val == Timer::TIME_OUT) return Timer::TIME_OUT;
+        if (val == 0) return 0;
+        if (val < minVal) minVal = val;
+    }
+    return minVal;
+}
+
 int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int beta) {
     if (depth == 0) {
-        int val = evaluate();
+        int val = maxKillSearch(KILL_DEPTH);
+
+        if (val == 0 || val == Timer::TIME_OUT) val = evaluate();
+
         m_TT.insert(m_pBoard->getBoardHash(), depth, val, TT::EXACT, player);
         return val;
     }

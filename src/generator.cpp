@@ -11,6 +11,7 @@ MoveGenerator::MoveGenerator() {
         for (int j = 0; j < Board::BOARD_SIZE; ++j) {
             m_maxScore[i][j] = INVALID_MOVE_WEIGHT;
             m_recorded[i][j] = 0;
+            m_killMovePos[i][j] = -1;
         }
     }
 }
@@ -85,9 +86,19 @@ void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, Scorer::Type
     m_playerMoveScore[player][move.x][move.y] += dw;
     m_sumPlayerScore[player] += dw;
 
-    m_maxScore[move.x][move.y] =
-        max(m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y],
-            m_playerMoveScore[Board::PIECE_COLOR::BLACK][move.x][move.y]);
+    int preMaxScore = m_maxScore[move.x][move.y];
+    int newMaxScore = max(m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y],
+                          m_playerMoveScore[Board::PIECE_COLOR::BLACK][move.x][move.y]);
+
+    m_maxScore[move.x][move.y] = newMaxScore;
+
+    if (preMaxScore < Scorer::TYPE_SCORES[Scorer::KILL_2] &&
+        newMaxScore >= Scorer::TYPE_SCORES[Scorer::KILL_2]) {
+        addKillMove(move);
+    } else if (preMaxScore >= Scorer::TYPE_SCORES[Scorer::KILL_2] &&
+               newMaxScore < Scorer::TYPE_SCORES[Scorer::KILL_2]) {
+        eraseKillMove(move);
+    }
 }
 
 void MoveGenerator::addMove(const Move &move) {
@@ -125,6 +136,23 @@ void MoveGenerator::eraseMove(const Move &move) {
         m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y];
 
     m_maxScore[move.x][move.y] = INVALID_MOVE_WEIGHT;
+
+    if (m_killMovePos[move.x][move.y] != -1) {
+        eraseKillMove(move);
+    }
+}
+
+void MoveGenerator::eraseKillMove(const Move &move) {
+    m_killMovePos[m_killMoves.back().x][m_killMoves.back().y] =
+        m_killMovePos[move.x][move.y];
+    std::swap(m_killMoves[m_killMovePos[move.x][move.y]], m_killMoves.back());
+    m_killMovePos[move.x][move.y] = -1;
+    m_killMoves.pop_back();
+}
+
+void MoveGenerator::addKillMove(const Move &move) {
+    m_killMovePos[move.x][move.y] = m_killMoves.size();
+    m_killMoves.push_back(move);
 }
 
 std::vector<MoveGenerator::Move> MoveGenerator::generateMovesList(int cnt) {
@@ -132,6 +160,10 @@ std::vector<MoveGenerator::Move> MoveGenerator::generateMovesList(int cnt) {
     return cnt < m_moves.size()
                ? std::vector<Move>(m_moves.begin(), m_moves.begin() + cnt)
                : m_moves;
+}
+
+std::vector<MoveGenerator::Move> MoveGenerator::generateKillMovesList() {
+    return m_killMoves;
 }
 
 bool MoveGenerator::existsMove(const Move &move) {
