@@ -23,9 +23,11 @@ int TT::find(unsigned long long hash, int depth, int alpha, int beta,
             case EXACT:
                 return item.value;
             case LOWER:
+                // val >= beta, the opponent will not choose this node
                 if (item.value >= beta) return item.value;
                 break;
             case UPPER:
+                // val <= alpha, we will not choose this node
                 if (item.value <= alpha) return item.value;
                 break;
             default:
@@ -42,6 +44,7 @@ void TT::insert(unsigned long long hash, int depth, int value, Flag flag,
 
     Item &item = m_pTable[color][idx];
 
+    // always replace the entry
     item.depth = depth;
     item.hash = hash;
     item.value = value;
