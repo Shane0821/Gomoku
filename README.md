@@ -10,11 +10,6 @@ make
 ./gomoku
 ```
 
-To build shared object, use: 
-```bash
-cmake .. -DBUILD_SHARED_LIBS=ON 
-```
-
 ## Techniques
 - MinMAX with Alpha-Beta Pruning.
 - Zobrist.
