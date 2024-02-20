@@ -109,7 +109,7 @@ class Core {
     /**
      * @brief The time limit for the search algorithm.
      */
-    const static int TIME_LIMIT = 5960;
+    const static int TIME_LIMIT = 5900;
 
    private:
     /**
