@@ -49,8 +49,7 @@ void Judger::initGameByJSON() {
                           input["requests"][turnID]["y"].asInt(), opponentColor);
     }
 
-    m_pCore = new Core(m_pBoard);
-    m_pCore->setColor(coreColor);
+    m_pCore = new Core(m_pBoard, coreColor);
 }
 
 void Judger::printCoreMoveByJSON() {
@@ -80,8 +79,7 @@ void Judger::startGame() {
         Board::PIECE_COLOR playerColor = static_cast<Board::PIECE_COLOR>(color);
         Board::PIECE_COLOR coreColor = static_cast<Board::PIECE_COLOR>(color ^ 1);
 
-        m_pCore = new Core(m_pBoard);
-        m_pCore->setColor(coreColor);
+        m_pCore = new Core(m_pBoard, coreColor);
 
         m_pBoard->display();
         for (int i = 0, hand = Board::PIECE_COLOR::BLACK;
