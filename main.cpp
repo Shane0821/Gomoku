@@ -1,5 +1,3 @@
-#pragma GCC optimize("O3")
-
 #include <cstring>
 
 #include "judger.h"
