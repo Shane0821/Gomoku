@@ -14,6 +14,8 @@ class Core {
     Core(Board *pBoard, Board::PIECE_COLOR);
     ~Core() {}
 
+    void initTimer() { m_timer.recordCurrent(); }
+
     MoveGenerator::Move bestMove() const { return m_bestMove; }
     int bestScore() const { return m_bestScore; }
     int run();

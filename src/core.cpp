@@ -226,8 +226,8 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
 int Core::run() {
     if (!m_pBoard) return -1;
 
-    m_timer.recordCurrent();
-
+    // if core is white, we search for odd depth, so that evaluation is done at black
+    // player's point of view
     iterativeDepth = MIN_SEARCH_DEPTH + 1 - m_color;
 
     if (ITERATIVE_DEEPENING) {
