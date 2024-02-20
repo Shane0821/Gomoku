@@ -10,10 +10,10 @@
 
 class Core {
    public:
-    Core(Board *pBoard);
+
+    Core(Board *pBoard, Board::PIECE_COLOR);
     ~Core() {}
 
-    void setColor(Board::PIECE_COLOR color) { m_color = color; }
     MoveGenerator::Move bestMove() const { return m_bestMove; }
     int bestScore() const { return m_bestScore; }
     int run();

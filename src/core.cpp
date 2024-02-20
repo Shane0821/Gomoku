@@ -9,7 +9,7 @@ int Core::MIN_SEARCH_DEPTH = 4;
 int Core::MAX_SEARCH_DEPTH = 10;
 int Core::KILL_DEPTH = 4;
 
-Core::Core(Board *pBoard) : m_pBoard(pBoard) {
+Core::Core(Board *pBoard, Board::PIECE_COLOR color) : m_pBoard(pBoard), m_color(color) {
     if (!pBoard) return;
 
     for (int i = 0; i < Board::BOARD_SIZE; ++i) {
