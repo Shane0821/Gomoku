@@ -20,20 +20,14 @@ class Core {
      * @brief Constructs a Core object with the specified board.
      *
      * @param pBoard A pointer to the Board object.
+     * @param color The color of the core.
      */
-    Core(Board *pBoard);
+    Core(Board *pBoard, Board::PIECE_COLOR);
 
     /**
      * @brief Destroys the Core object.
      */
     ~Core() {}
-
-    /**
-     * @brief Sets the color of the player.
-     *
-     * @param color The color of the player.
-     */
-    void setColor(Board::PIECE_COLOR color) { m_color = color; }
 
     /**
      * @brief Gets the best move found by the Core.
