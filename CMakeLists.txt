@@ -4,9 +4,7 @@ project (GOMOKU)
 
 set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_STANDARD_REQUIRED true)
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
-
-option (BUILD_SHARED_LIBS OFF)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast")
 
 # ============================
 # Define directories
@@ -30,11 +28,6 @@ include_directories (
 
 aux_source_directory (${DIR_SRC} SRC)
 aux_source_directory (${DIR_JSON} JSONCPP)
-
-if (BUILD_SHARED_LIBS) 
-    add_library(gomokuso SHARED main.cpp ${JSONCPP} ${SRC})
-endif()
-    
 
 add_executable(gomoku main.cpp ${JSONCPP} ${SRC})
 
