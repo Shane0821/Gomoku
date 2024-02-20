@@ -85,6 +85,7 @@ void Judger::startGame() {
         for (int i = 0, hand = Board::PIECE_COLOR::BLACK;
              i < Board::BOARD_SIZE * Board::BOARD_SIZE; i++, hand ^= 1) {
             if (hand == coreColor) {
+                m_pCore->initTimer();
                 int tm = m_pCore->run();
                 std::cout << "Run time: " << tm << "ms\n";
                 std::cout << "Best score: " << m_pCore->bestScore() << std::endl;

@@ -30,6 +30,11 @@ class Core {
     ~Core() {}
 
     /**
+     * @brief Init timer.
+     */
+    void initTimer() { m_timer.recordCurrent(); }
+
+    /**
      * @brief Gets the best move found by the Core.
      *
      * @return The best move found by the Core.
