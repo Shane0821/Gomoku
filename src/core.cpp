@@ -3,7 +3,7 @@
 #define min(a, b) ((a) <= (b) ? (a) : (b))
 #define max(a, b) ((a) >= (b) ? (a) : (b))
 
-bool Core::ITERATIVE_DEEPENING = false;
+bool Core::ITERATIVE_DEEPENING = true;
 int Core::BRANCH_FACTOR = 20;
 int Core::MIN_SEARCH_DEPTH = 4;
 int Core::MAX_SEARCH_DEPTH = 10;
