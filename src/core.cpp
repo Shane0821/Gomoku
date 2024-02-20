@@ -4,7 +4,7 @@
 #define max(a, b) ((a) >= (b) ? (a) : (b))
 
 bool Core::ITERATIVE_DEEPENING = true;
-int Core::BRANCH_FACTOR = 20;
+int Core::BRANCH_FACTOR = 25;
 int Core::MIN_SEARCH_DEPTH = 4;
 int Core::MAX_SEARCH_DEPTH = 10;
 int Core::KILL_DEPTH = 4;
