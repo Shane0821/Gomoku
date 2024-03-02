@@ -1,8 +1,8 @@
 # Gomoku
 A gomoku player via MiniMax Search and Alpha-Beta Pruning, running on https://botzone.org.cn/.
 
-[<img src="./images/rating.png" width="768" center/>](./images/rating.png)
-[<img src="./images/game.png" width="768" center/>](./images/game.png)
+[<img src="./images/rating.png" width="640" center/>](./images/rating.png)
+[<img src="./images/game.png" width="640" center/>](./images/game.png)
 
 ## How to use
 ```bash
