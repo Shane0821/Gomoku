@@ -28,6 +28,8 @@ https://botzone.org.cn/match/65dddd88d43a1d5f79f1e2ac
 ### 6s Time Limit
 https://botzone.org.cn/match/65d4a70cd43a1d5f79ea2552
 https://botzone.org.cn/match/65d4aa05d43a1d5f79ea273b
+https://botzone.org.cn/match/65e2c097e7439a290b613f52
+https://botzone.org.cn/match/65e26df8e7439a290b6112d8
 
 https://botzone.org.cn/match/65d94f58d43a1d5f79ee36fd
 https://botzone.org.cn/match/65dbec4fd43a1d5f79f06aed
