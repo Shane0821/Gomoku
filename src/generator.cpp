@@ -46,13 +46,13 @@ void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, Scorer::Type
         }
 
         if (m_cntL3[player][move.x][move.y]) {
-            dw -= Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw -= Scorer::TYPE_SCORES[Scorer::KILL_2];
         }
     } else if (preType == Scorer::LIVE_THREE) {
         m_cntL3[player][move.x][move.y]--;
 
         if (m_cntS4[player][move.x][move.y]) {
-            dw -= Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw -= Scorer::TYPE_SCORES[Scorer::KILL_2];
         }
 
         if (m_cntL3[player][move.x][move.y]) {
@@ -66,13 +66,13 @@ void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, Scorer::Type
         }
 
         if (m_cntL3[player][move.x][move.y]) {
-            dw += Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw += Scorer::TYPE_SCORES[Scorer::KILL_2];
         }
 
         m_cntS4[player][move.x][move.y]++;
     } else if (type == Scorer::LIVE_THREE) {
         if (m_cntS4[player][move.x][move.y]) {
-            dw += Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw += Scorer::TYPE_SCORES[Scorer::KILL_2];
         }
 
         if (m_cntL3[player][move.x][move.y]) {
@@ -85,9 +85,7 @@ void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, Scorer::Type
     m_playerMoveScore[player][move.x][move.y] += dw;
     m_sumPlayerScore[player] += dw;
 
-    m_maxScore[move.x][move.y] =
-        max(m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y],
-            m_playerMoveScore[Board::PIECE_COLOR::BLACK][move.x][move.y]);
+    m_maxScore[move.x][move.y] += dw;
 }
 
 void MoveGenerator::addMove(const Move &move) {
