@@ -1,6 +1,7 @@
 # Gomoku
 A gomoku player via MiniMax Search and Alpha-Beta Pruning, running on https://botzone.org.cn/.
 
+[<img src="./images/rank.png" width="640" center/>](./images/rank.png)
 [<img src="./images/rating.png" width="640" center/>](./images/rating.png)
 [<img src="./images/game.png" width="640" center/>](./images/game.png)
 
