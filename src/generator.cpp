@@ -47,13 +47,13 @@ void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, Scorer::Type
         }
 
         if (m_cntL3[player][move.x][move.y]) {
-            dw -= Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw -= Scorer::TYPE_SCORES[Scorer::KILL_2];
         }
     } else if (preType == Scorer::LIVE_THREE) {
         m_cntL3[player][move.x][move.y]--;
 
         if (m_cntS4[player][move.x][move.y]) {
-            dw -= Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw -= Scorer::TYPE_SCORES[Scorer::KILL_2];
         }
 
         if (m_cntL3[player][move.x][move.y]) {
@@ -67,13 +67,13 @@ void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, Scorer::Type
         }
 
         if (m_cntL3[player][move.x][move.y]) {
-            dw += Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw += Scorer::TYPE_SCORES[Scorer::KILL_2];
         }
 
         m_cntS4[player][move.x][move.y]++;
     } else if (type == Scorer::LIVE_THREE) {
         if (m_cntS4[player][move.x][move.y]) {
-            dw += Scorer::TYPE_SCORES[Scorer::KILL_1];
+            dw += Scorer::TYPE_SCORES[Scorer::KILL_2];
         }
 
         if (m_cntL3[player][move.x][move.y]) {
@@ -87,16 +87,16 @@ void MoveGenerator::updateMoveScoreByDir(const Move &move, int dir, Scorer::Type
     m_sumPlayerScore[player] += dw;
 
     int preMaxScore = m_maxScore[move.x][move.y];
-    int newMaxScore = max(m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y],
-                          m_playerMoveScore[Board::PIECE_COLOR::BLACK][move.x][move.y]);
+    // int newMaxScore = max(m_playerMoveScore[Board::PIECE_COLOR::WHITE][move.x][move.y],
+    //                       m_playerMoveScore[Board::PIECE_COLOR::BLACK][move.x][move.y]);
 
-    m_maxScore[move.x][move.y] = newMaxScore;
+    m_maxScore[move.x][move.y] += dw;
 
     if (preMaxScore < Scorer::TYPE_SCORES[Scorer::KILL_2] &&
-        newMaxScore >= Scorer::TYPE_SCORES[Scorer::KILL_2]) {
+        m_maxScore[move.x][move.y] >= Scorer::TYPE_SCORES[Scorer::KILL_2]) {
         addKillMove(move);
     } else if (preMaxScore >= Scorer::TYPE_SCORES[Scorer::KILL_2] &&
-               newMaxScore < Scorer::TYPE_SCORES[Scorer::KILL_2]) {
+               m_maxScore[move.x][move.y] < Scorer::TYPE_SCORES[Scorer::KILL_2]) {
         eraseKillMove(move);
     }
 }
