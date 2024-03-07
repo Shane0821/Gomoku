@@ -169,7 +169,7 @@ int Core::negMiniMaxSearch(int depth, Board::PIECE_COLOR player, int alpha, int 
             int val = alpha;
 
             if (m_moveGenerator.playerMoveScore(move, player) >=
-                Scorer::TYPE_SCORES[Scorer::LIVE_FOUR]) {
+                Scorer::TYPE_SCORES[Scorer::KILL_1]) {
                 val = INF + depth + KILL_DEPTH - 1;
 
                 if (depth == iterativeDepth && val > m_bestScore) {
